@@ -1,9 +1,17 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-data_url = "http://lib.stat.cmu.edu/datasets/boston"
-raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
-data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-target = raw_df.values[1::2, 2]
+# making dataframe
+df = pd.read_csv("bankruptcy_data_set.csv")
+
+#number of features (e.g. no. of rows, columns)
+print(df.shape)
+
+#column names and types
+print(df.info())
+
+#remove column Company
+df.drop('Company', axis=1, inplace=True)
+
+
+
+
