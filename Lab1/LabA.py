@@ -9,17 +9,21 @@ df = pd.read_csv("bankruptcy_data_set.csv")
 #column names and types
 #print(df.info())
 
+
+#have to make copy of dataframe to avoid errors
+df2 = df
+
 #remove column Company
-df.drop('Company', axis=1, inplace=True)
+df2.drop('Company', axis=1, inplace=True)
 
 #remove all "NaN" rows
-df2 = df.dropna()
+df2.dropna()
 
 #sum WC/TA & RE/TA
 df2['Sum of WC/TA & RE/TA'] = df2['WC/TA'] + df2['RE/TA']
 
 #Multiply EBIT/TA & S/TA
-df2['Product of EBIT/TA & S/TA'] = df2['EBIT/TA'] + df2['S/TA']
+df2['Product of EBIT/TA & S/TA'] = df2['EBIT/TA'] * df2['S/TA']
 
 
 print(df2)
