@@ -14,6 +14,9 @@ df.drop('symbol', axis=1, inplace=True)
 # convert the 'date' column to datetime format
 df['date'] = df['date'].astype('datetime64[ns]')
 
+#set index
+df.set_index('date')
+
 #create date features
 df['Year'] = df['date'].dt.year
 df['Month'] = df['date'].dt.month
