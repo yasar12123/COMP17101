@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from datetime import datetime, date, timedelta
 
 #Read the csv file
@@ -33,28 +33,33 @@ df.drop('datetime', axis=1, inplace=True)
 #percentage of change of open and close price
 df['PercChangeOpenClose'] = (df['close'] / df['open']) - 1
 
+#returns col and log
+#df['returns'] = df['close'].pct_change()
+df['log'] = np.log1p(df['PercChangeOpenClose'])
+
 #calc column - if close price is greater than open then bullish otherwise bearish
 #df['BullBear'] = np.where(df['PercChangeOpenClose'] >= 0, 1, 0)
 
-#log
-df['log'] = np.log1p(df['PercChangeOpenClose'])
-
 
 # plots
-
 # plt.figure(1, figsize=(16,6))
 # plt.plot(df['PercChangeOpenClose'])
-# plt.show()
-#
-# plt.figure(1, figsize=(16,6))
-# plt.plot(df['log'])
+# plt.plot(df['returns'])
 # plt.show()
 
 
+# pd.set_option("display.max.columns", None)
+# print(df.head())
 
-#train = df[['BullBear']]
+#transform x, y
+#x = df.loc[:, df.columns != 'date'].values
+x = df[['close', 'PercChangeOpenClose', 'log']].values
 
+scaler = MinMaxScaler(feature_range=(0,1)).fit(x)
+xScaled = scaler.transform(x)
 
+print(xScaled[0])
 
-#pd.set_option("display.max.columns", None)
-print(df)
+y = [x[0] for x in xScaled]
+
+print(y[0])
