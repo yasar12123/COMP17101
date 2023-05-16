@@ -1,20 +1,64 @@
 import numpy as np
-from sklearn.model_selection import TimeSeriesSplit
-X = np.array([['a', 'b'], ['c', 'd'], ['e', 'f'], ['g', 'h'], ['i', 'j'], ['k', 'l']])
-y = np.array(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
-time_series = TimeSeriesSplit()
-print(time_series)
-# for train_index, test_index in time_series.split(X):
-#     print("TRAIN:", train_index, "TEST:", test_index)
-#     X_train, X_test = X[train_index], X[test_index]
-#     y_train, y_test = y[train_index], y[test_index]
-
-n_future = 24   # Number of days we want to look into the future based on the past days.
-n_past = 336  # Number of past days we want to use to predict the future.
+import pandas as pd
+from TimeBasedCV import TimeBasedCV
+import datetime
+from sklearn.preprocessing import StandardScaler
 
 
-for train_index, test_index in time_series.split(X):
-    print("TRAIN:", train_index,  "TEST:", test_index)
-    print(X[train_index], X[test_index], y[train_index], y[test_index])
-    #trainX.append(df_for_training_scaled[i - n_past:i, 0:df_for_training.shape[1]])
-    #trainY.append(df_for_training_scaled[i + n_future - 1:i + n_future, 0])
+from matplotlib import pyplot as plt
+
+
+#Read the csv file
+df = pd.read_csv("BTC-USD.csv")
+#datetime col
+#df['datetime'] = pd.to_datetime(df["Date"], dayfirst=True)
+
+df = df[0:10]
+
+
+#data array
+trainDataArray = df.loc[:, df.columns != 'Date'].values
+targetDataArray = df.loc[:, df.columns == 'Close'].values
+
+
+#scale data
+#scaler train data
+scaler = StandardScaler()
+scaler = scaler.fit(trainDataArray)
+trainDataScaled = scaler.transform(trainDataArray)
+#scaler target data
+scaler = scaler.fit(targetDataArray)
+targetDataScaled = scaler.transform(targetDataArray)
+
+
+#split train test data
+split = int(len(trainDataScaled) * 0.7)
+#x,y arrays before sliding window split
+x_train = trainDataScaled[: split]
+x_test = trainDataScaled[split: len(trainDataScaled)]
+y_train = targetDataScaled[: split]
+y_test = targetDataScaled[split: len(targetDataScaled)]
+
+
+#X,Y array - sliding window split
+nSplit = 3
+Xtrain = []
+Xtest = []
+Ytrain = []
+Ytest = []
+for i in range(nSplit, len(x_train)):
+    Xtrain.append(x_train[i-nSplit:i, :x_train.shape[1]])
+    Ytrain.append(y_train[i])
+for i in range(nSplit, len(x_test)):
+    Xtrain.append(x_test[i-nSplit:i, :x_test.shape[1]])
+    Ytrain.append(y_test[i])
+
+
+Xtrain, Ytrain = (np.array(Xtrain), np.array(Ytrain))
+Xtrain = np.reshape(Xtrain, (Xtrain.shape[0], Xtrain.shape[1], Xtrain.shape[2]))
+
+# Xtest, Ytest = (np.array(Xtest), np.array(Ytest))
+# Xtest = np.reshape(Xtest, (Xtest.shape[0], Xtest.shape[1], Xtest.shape[2]))
+
+print(Xtrain.shape, Ytrain.shape)
+
