@@ -61,4 +61,5 @@ Xtrain = np.reshape(Xtrain, (Xtrain.shape[0], Xtrain.shape[1], Xtrain.shape[2]))
 # Xtest = np.reshape(Xtest, (Xtest.shape[0], Xtest.shape[1], Xtest.shape[2]))
 
 print(Xtrain.shape, Ytrain.shape)
+print(Xtrain.shape, Ytrain.shape)
 

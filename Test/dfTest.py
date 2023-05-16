@@ -1,45 +1,34 @@
-import pandas as pd
+from TimeBasedCV import TimeBasedCV
+import datetime
 import numpy as np
-from datetime import datetime, date, timedelta
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.preprocessing import MinMaxScaler
-from keras.preprocessing.sequence import TimeseriesGenerator
+import pandas as pd
+from sklearn.linear_model import LinearRegression
 
 
-# making dataframe
-df = pd.read_csv("Bitstamp_BTCUSD_1h.csv", header=1)
+#Read the csv file
+df = pd.read_csv("BTC-USD.csv")
+#pre processing
+#datetime col
+df['datetime'] = pd.to_datetime(df["Date"], dayfirst=True)
 
-#remove columns
-df.drop('unix', axis=1, inplace=True)
-df.drop('symbol', axis=1, inplace=True)
-
-# convert the 'date' column to datetime format
-df['date'] = pd.to_datetime(df["date"])
-
-#set index
-df.set_index('date')
-
-#create date features
-df['Year'] = df['date'].dt.year
-df['Month'] = df['date'].dt.month
-df['Week'] = df['date'].dt.isocalendar().week
-df['DayOfWeek'] = df['date'].dt.dayofweek
-df['Day'] = df['date'].dt.day
-df['Hour'] = df['date'].dt.hour
-
-#calc column - if close price is greater than open then bullish otherwise bearish
-#df['BullBear'] = np.where(df['close'] > df['open'], 1, 0)
+#df = df[0:10]
+dataFeatures = df[['Date', 'Open', 'High', 'Low']]
+dataTarget = df[['Close']]
 
 
-#split data test and train
-dateToSplitFrom = max(df['date']) - timedelta(weeks=42)
-data_train_filter = df.loc[(df['date'] <= dateToSplitFrom)]
-data_train = list(data_train_filter)[1:6]
-data_test = df.loc[(df['date'] > dateToSplitFrom)]
+##initialse data into split
+slidingWindow = TimeBasedCV(train_period=14, test_period=1, freq='days')
+slidingWindow.split(df)
+x_y_train_test_split = slidingWindow.x_y_split(0.8, dataFeatures, dataTarget)
 
-print(data_train.columns)
-#MinMaxScaler
-scaler = MinMaxScaler()
 
-#scaler.fit(data_train)
-#scaled_train = scaler.transform(data_train)
+#x y train test data
+x_train = x_y_train_test_split[0]
+y_train = x_y_train_test_split[1]
+x_test = x_y_train_test_split[2]
+y_test = x_y_train_test_split[3]
+
+#print(x_train)
+#print(y_train)
+print(x_test[-1])
+print(y_test[-1])

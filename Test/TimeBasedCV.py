@@ -24,6 +24,7 @@ class TimeBasedCV(object):
         self.train_period = train_period
         self.test_period = test_period
         self.freq = freq
+        self.index_output = []
 
     def split(self, data, validation_split_date=None, date_column='datetime', gap=0):
         '''
@@ -91,6 +92,7 @@ class TimeBasedCV(object):
         index_output = [(train, test) for train, test in zip(train_indices_list, test_indices_list)]
 
         self.n_splits = len(index_output)
+        self.index_output = index_output
 
         return index_output
 
@@ -102,3 +104,44 @@ class TimeBasedCV(object):
             Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
+
+
+    def x_y_split(self, split_ratio, dataFeatures, dataTarget):
+        """Returns the x_train, y_train, x_test, y_test
+        Returns
+        -------
+        x_train, y_train, x_test, y_test:
+            respectively
+        """
+        dataFeatures = dataFeatures
+        dataTarget = dataTarget
+        split = int(self.n_splits * split_ratio)
+        trainSplit = self.index_output[:split]
+        testSplit = self.index_output[split:]
+
+        # organise data into x y train
+        x_train = []
+        y_train = []
+        for loopIndex, trainIndex in enumerate(trainSplit):
+            x_trainIndexMin = min(trainIndex[0])
+            x_trainIndexMax = max(trainIndex[0]) + 1
+            y_trainIndex = trainIndex[1][0]
+            x_trainDF = dataFeatures[x_trainIndexMin:x_trainIndexMax]
+            y_trainDF = dataTarget[y_trainIndex:y_trainIndex + 1]
+            x_train.append(x_trainDF.to_numpy())
+            y_train.append(y_trainDF.values.tolist()[0][0])
+
+        # organise data into x y test
+        x_test = []
+        y_test = []
+        for loopIndex, testIndex in enumerate(testSplit):
+            x_testIndexMin = min(testIndex[0])
+            x_testIndexMax = max(testIndex[0]) + 1
+            y_testIndex = testIndex[1][0]
+            x_testDF = dataFeatures[x_testIndexMin:x_testIndexMax]
+            y_testDF = dataTarget[y_testIndex:y_testIndex + 1]
+            x_test.append(x_testDF.to_numpy())
+            y_test.append(y_testDF.values.tolist()[0][0])
+
+        return x_train, y_train, x_test, y_test
+
