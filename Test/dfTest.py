@@ -11,7 +11,7 @@ df = pd.read_csv("BTC-USD.csv")
 #datetime col
 df['datetime'] = pd.to_datetime(df["Date"], dayfirst=True)
 
-#df = df[0:10]
+df = df[0:20]
 dataFeatures = df[['Date', 'Open', 'High', 'Low']]
 dataTarget = df[['Close']]
 
@@ -28,7 +28,5 @@ y_train = x_y_train_test_split[1]
 x_test = x_y_train_test_split[2]
 y_test = x_y_train_test_split[3]
 
-#print(x_train)
-#print(y_train)
-print(x_test[-1])
-print(y_test[-1])
+
+print(x_train)

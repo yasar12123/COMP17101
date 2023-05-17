@@ -91,5 +91,7 @@ for i, (model, name) in enumerate(zip(models, names)):
 
 plt.subplots_adjust(left=None, bottom=0, right=None,
                     top=None, wspace=None, hspace=0.6)
-plt.show()
+#plt.show()
 
+print(X_train[0])
+#print(type(Y_train))

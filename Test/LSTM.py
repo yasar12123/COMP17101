@@ -1,63 +1,59 @@
-import numpy as np
+from TimeBasedCV import TimeBasedCV
 import pandas as pd
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Dense, Dropout
-from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt # this is used for the plot the graph
+from sklearn.preprocessing import MinMaxScaler
 
-from matplotlib import pyplot as plt
-import seaborn as sns
-from datetime import datetime, date, timedelta
+## for Deep-learing:
+import keras
+from keras.layers import Dense
+from keras.models import Sequential
+from keras.layers import LSTM
+from keras.layers import Dropout
 
 #Read the csv file
-pre_df = pd.read_csv("Bitstamp_BTCUSD_1h.csv", header=1)
+df = pd.read_csv("BTC-USD.csv")
+#pre processing
 #datetime col
-pre_df['datetime'] = pd.to_datetime(pre_df["date"])
-#sorted df by datetime
-df = pre_df.sort_values(by='datetime', ascending=True)
+df['datetime'] = pd.to_datetime(df["Date"], dayfirst=True)
+dataFeatures = df[['Open', 'High', 'Low']]
+dataTarget = df[['Close']]
 
-#set index
-df.set_index('date')
+df = df[0:20]
 
-#remove columns
-df.drop('unix', axis=1, inplace=True)
-df.drop('symbol', axis=1, inplace=True)
 
-#create date features
-df['Year'] = df['datetime'].dt.year
-df['Month'] = df['datetime'].dt.month
-df['Week'] = df['datetime'].dt.isocalendar().week
-df['DayOfWeek'] = df['datetime'].dt.dayofweek
-df['Day'] = df['datetime'].dt.day
-df['Hour'] = df['datetime'].dt.hour
-
-#remove columns
-df.drop('datetime', axis=1, inplace=True)
-
-#percentage of change of open and close price
-df['PercChangeOpenClose'] = (df['close'] / df['open']) - 1
-#log
-df['log'] = np.log1p(df['PercChangeOpenClose'])
-
-#calc column - if close price is greater than open then bullish otherwise bearish
-#df['BullBear'] = np.where(df['PercChangeOpenClose'] >= 0, 1, 0)
+##initialse data into split
+slidingWindow = TimeBasedCV(train_period=3, test_period=1, freq='days')
+slidingWindow.split(df)
+x_y_train_test_split = slidingWindow.x_y_split(0.8, dataFeatures, dataTarget)
 
 
 
-#train data
-#trainData = df.loc[:, df.columns != 'date']
-trainDataArray = df.loc[:, df.columns != 'date'].values
-targetDataArray = df.loc[:, df.columns == 'close'].values
+#x y train test data
+x_train = x_y_train_test_split[0]
+y_train = x_y_train_test_split[1]
+x_test = x_y_train_test_split[2]
+y_test = x_y_train_test_split[3]
 
-#scaler train data
-scaler = StandardScaler()
-scaler = scaler.fit(trainDataArray)
-trainDataScaled = scaler.transform(trainDataArray)
+print(y_train[1])
+print(slidingWindow.scaler_transform(y_train)[2])
 
-#scaler target data
-scaler = scaler.fit(targetDataArray)
-targetDataScaled = scaler.transform(targetDataArray)
-
-
-print(trainDataScaled)
-print(targetDataScaled)
+# #lstm model
+# model = Sequential()
+# model.add(LSTM(100, input_shape=(x_train.shape[1], x_train.shape[2])))
+# model.add(Dropout(0.2))
+# #    model.add(LSTM(70))
+# #    model.add(Dropout(0.3))
+# model.add(Dense(1))
+# model.compile(loss='mean_squared_error', optimizer='adam')
+#
+# # fit network
+# history = model.fit(x_train, y_train, epochs=20, batch_size=70, validation_data=(x_test, y_test), verbose=2, shuffle=False)
+#
+# # summarize history for loss
+# plt.plot(history.history['loss'])
+# plt.plot(history.history['val_loss'])
+# plt.title('model loss')
+# plt.ylabel('loss')
+# plt.xlabel('epoch')
+# plt.legend(['train', 'test'], loc='upper right')
+# plt.show()

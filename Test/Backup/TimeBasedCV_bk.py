@@ -3,7 +3,6 @@ import pandas as pd
 import datetime
 from datetime import datetime as dt
 from dateutil.relativedelta import *
-from sklearn.preprocessing import MinMaxScaler
 
 
 class TimeBasedCV(object):
@@ -27,7 +26,6 @@ class TimeBasedCV(object):
         self.test_period = test_period
         self.freq = freq
         self.index_output = []
-        self.scaler = MinMaxScaler()
 
     def split(self, data, validation_split_date=None, date_column='datetime', gap=0):
         '''
@@ -125,19 +123,15 @@ class TimeBasedCV(object):
         # organise data into x y train
         x_train = []
         y_train = []
-        scaler = self.scaler
-
         for loopIndex, trainIndex in enumerate(trainSplit):
             x_trainIndexMin = min(trainIndex[0])
             x_trainIndexMax = max(trainIndex[0]) + 1
             x_trainDF = dataFeatures[x_trainIndexMin:x_trainIndexMax]
-            x_trainDFScaled = scaler.fit_transform(x_trainDF.values)
-            x_train.append(x_trainDFScaled)
+            x_train.append(x_trainDF.to_numpy())
             y_trainIndexMin = min(trainIndex[1])
             y_trainIndexMax = max(trainIndex[1]) + 1
             y_trainDF = dataTarget[y_trainIndexMin:y_trainIndexMax]
-            y_trainDFScaled = scaler.fit_transform(y_trainDF.values)
-            y_train.append(y_trainDFScaled[0])
+            y_train.append(y_trainDF.values.tolist()[0][0])
 
         # organise data into x y test
         x_test = []
@@ -146,20 +140,11 @@ class TimeBasedCV(object):
             x_testIndexMin = min(testIndex[0])
             x_testIndexMax = max(testIndex[0]) + 1
             x_testDF = dataFeatures[x_testIndexMin:x_testIndexMax]
-            x_testDFScaled = scaler.fit_transform(x_testDF.values)
-            x_test.append(x_testDFScaled)
+            x_test.append(x_testDF.to_numpy())
             y_testIndexMin = min(testIndex[1])
             y_testIndexMax = max(testIndex[1]) + 1
             y_testDF = dataTarget[y_testIndexMin:y_testIndexMax]
-            y_testDFScaled = scaler.fit_transform(y_testDF.values)
-            y_test.append(y_testDFScaled[0])
+            y_test.append(y_testDF.values.tolist()[0][0])
 
         return np.array(x_train), np.array(y_train), np.array(x_test), np.array(y_test)
 
-
-    def scaler_transform(self, array):
-        """
-
-        """
-        a = self.scaler.transform(array)
-        return a
