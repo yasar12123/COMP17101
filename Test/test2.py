@@ -35,13 +35,13 @@ for loopIndex, trainIndex in enumerate(trainSplit):
     x_trainIndexMin = min(trainIndex[0])
     x_trainIndexMax = max(trainIndex[0]) + 1
     x_trainDF = dataFeatures[x_trainIndexMin:x_trainIndexMax]
-    x_trainDFScaled = scaler.fit_transform(x_trainDF.values)
-    x_train.append(x_trainDFScaled)
+    #x_trainDFScaled = scaler.fit_transform(x_trainDF.values)
+    #x_train.append(x_trainDFScaled)
     y_trainIndexMin = min(trainIndex[1])
     y_trainIndexMax = max(trainIndex[1]) + 1
     y_trainDF = dataTarget[y_trainIndexMin:y_trainIndexMax]
-    y_trainDFScaled = scaler.fit_transform(y_trainDF.values)
-    y_train.append(y_trainDFScaled[0][0])
+    #y_trainDFScaled = scaler.fit_transform(y_trainDF.values)
+    #y_train.append(y_trainDFScaled[0][0])
 
 # organise data into x y test
 x_test = []

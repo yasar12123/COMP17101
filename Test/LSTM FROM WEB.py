@@ -30,12 +30,13 @@ train_dates = pd.to_datetime(df['Date'])
 
 # Variables for training
 cols = list(df)[1:6]
+print(cols)
 # Date and volume columns are not used in training.
 #print(cols)  # ['Open', 'High', 'Low', 'Close', 'Adj Close']
 
 # New dataframe with only training data - 5 columns
 df_for_training = df[cols].astype(float)
-
+print(df_for_training)
 
 # df_for_plot=df_for_training.tail(5000)
 # df_for_plot.plot.line()
@@ -49,7 +50,7 @@ df_for_training_scaled = scaler.transform(df_for_training)
 #print(df_for_training_scaled)
 # As required for LSTM networks, we require to reshape an input data into n_samples x timesteps x n_features.
 # In this example, the n_features is 5. We will make timesteps = 14 (past days data used for training).
-
+#print(df_for_training)
 # Empty lists to be populated using formatted training data
 trainX = []
 trainY = []
@@ -64,10 +65,10 @@ for i in range(n_past, len(df_for_training_scaled) - n_future + 1):
     trainX.append(df_for_training_scaled[i - n_past:i, 0:df_for_training.shape[1]])
     trainY.append(df_for_training_scaled[i + n_future - 1:i + n_future, 0])
 
-print(type(trainX[0]))
-
+#print(trainX)
+#print(df_for_training_scaled)
 trainX, trainY = np.array(trainX), np.array(trainY)
-
+print(trainX)
 print('trainX shape == {}.'.format(trainX.shape))
 print('trainY shape == {}.'.format(trainY.shape))
 
