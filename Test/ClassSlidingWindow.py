@@ -6,37 +6,41 @@ class SlidingWindow(object):
     '''
     '''
 
-    def __init__(self, dataframe, features, target):
+    def __init__(self, dataframe, datetime_feature, features, target):
         self.dataframe = dataframe
+        self.datetime_feature = dataframe[datetime_feature]
         self.features = features
         self.target = target
-        self.scaler = StandardScaler()
+        self.dfTrainSplit = []
+        self.dfTestSplit = []
+        self.scalerFeatures = StandardScaler()
+        self.scalerTarget = StandardScaler()
         self.trainX = []
         self.trainY = []
         self.testX = []
         self.testY = []
-        self.scaler_trainX = 0
-        self.scaler_trainY = 0
-        self.scaler_testX = 0
-        self.scaler_testY = 0
+        self.scalerX = 0
+        self.scalerY = 0
 
     def split(self, split_ratio, steps_back, steps_forward):
         #train split
         split = int(len(self.dataframe) * split_ratio)
         train_split = self.dataframe[:split]
+        self.dfTrainSplit = train_split
         train_X = train_split[self.features]
         train_Y = train_split[self.target]
 
         #scale data
-        scaler = self.scaler
+        scalerF = self.scalerFeatures
         # scale trainX
-        scaler_trainX = scaler.fit(train_X)
-        train_X_scaled = scaler_trainX.transform(train_X)
-        self.scaler_trainX = scaler_trainX
+        scalerX = scalerF.fit(train_X)
+        train_X_scaled = scalerX.transform(train_X)
+        self.scalerX = scalerX
         # scale trainY
-        scaler_trainY = scaler.fit(train_Y)
-        train_Y_scaled = scaler_trainY.transform(train_Y)
-        self.scaler_trainY = scaler_trainY
+        scalerT = self.scalerTarget
+        scalerY = scalerT.fit(train_Y)
+        train_Y_scaled = scalerY.transform(train_Y)
+        self.scalerY = scalerY
 
         #number of steps to look back and forward
         n_future = steps_forward  # Number of days we want to look into the future based on the past days.
@@ -51,22 +55,17 @@ class SlidingWindow(object):
 
         self.trainX, self.trainY = np.array(trainX), np.array(trainY)
 
-
         #test split
         test_split = self.dataframe[split:]
+        self.dfTestSplit = test_split
         test_X = test_split[self.features]
         test_Y = test_split[self.target]
 
         #scale data
-        scaler = self.scaler
         # scale testX
-        scaler_testX = scaler.fit(test_X)
-        test_X_scaled = scaler_testX.transform(test_X)
-        self.scaler_testX = scaler_testX
+        test_X_scaled = scalerX.transform(test_X)
         # scale trainY
-        scaler_testY = scaler.fit(test_Y)
-        test_Y_scaled = scaler_testY.transform(test_Y)
-        self.scaler_testY = scaler_testY
+        test_Y_scaled = scalerY.transform(test_Y)
 
         #split test data into steps
         testX = []
@@ -79,20 +78,17 @@ class SlidingWindow(object):
 
         return self.trainX, self.trainY, self.testX, self.testY
 
+    def inverse_target_scaler(self, predictY):
+        scalerY = self.scalerY
+        predictY_values = scalerY.inverse_transform(predictY)
 
-    # def inverse_scaler(self):
-    #     scalerF = self.scalerF
-    #     trainX = self.trainX
-    #     x = []
-    #     for i in trainX:
-    #         inverseX = scalerF.inverse_transform(trainX)
-    #         x.append(inverseX)
-    #
-    #     # scalerT = self.scalerT
-    #     # trainY = self.trainY
-    #     # y = []
-    #     # for i in trainY:
-    #     #     inverseY = scalerT.inverse_transform(y)
-    #     #     y.append(inverseY)
-    #
-    #     return np.array(x)#, np.array(y)
+        return predictY_values
+
+    def actual_predicted_target_values(self, predictY):
+        scalerY = self.scalerY
+        predictY_values = scalerY.inverse_transform(predictY)
+        df = self.dfTestSplit[-len(predictY):].copy()
+        a = predictY_values
+        df['predicted value'] = predictY_values.tolist()
+
+        return a

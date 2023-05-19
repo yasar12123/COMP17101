@@ -18,7 +18,7 @@ df['row_number'] = df.reset_index().index
 #df = df[0:100]
 
 #split data sliding window
-a = SlidingWindow(df, ['row_number', 'Open', 'High', 'Low'], ['Close'])
+a = SlidingWindow(df, ['datetime'], ['row_number', 'Open', 'High', 'Low'], ['Close'])
 xtrain, ytrain, xtest, ytest = a.split(0.8, 14, 1)
 
 
@@ -26,6 +26,7 @@ print(xtrain.shape)
 print(ytrain.shape)
 print(xtest.shape)
 print(ytest.shape)
+
 
 #LSTM Model
 model = Sequential()
@@ -35,23 +36,24 @@ model.add(Dropout(0.2))
 model.add(Dense(ytrain.shape[1]))
 model.compile(optimizer='adam', loss='mse', metrics=["accuracy"])
 model.summary()
+
+
 # fit the model
-history = model.fit(xtrain, ytrain, epochs=5, batch_size=16, validation_split=0.1, verbose=1)
+history = model.fit(xtrain, ytrain, epochs=10, batch_size=16, validation_split=0.1, verbose=1)
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
 plt.plot(history.history['val_loss'], label='Validation loss')
 plt.legend()
-#plt.show()
+plt.show()
 
 
 #make predictions
-trainPredict = model.predict(xtrain)
-testPredict = model.predict(xtest)
-# #invert predictions
-# trainPredict = scaler.inverse_transform(trainPredict)
-# trainY = scaler.inverse_transform([ytrain])
-# testPredict = scaler.inverse_transform(testPredict)
-# testY = scaler.inverse_transform([ytest])
+prediction = model.predict(xtest)
 
-print(trainPredict)
-print(testPredict)
+
+a = a.actual_predicted_target_values(prediction)
+print(a[["Date","Close","predicted value"]])
+a.plot(x='Close', y='Date', kind='line')
+a.plot(x='predicted value', y='Date')
+plt.legend()
+plt.show()
