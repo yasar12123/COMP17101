@@ -39,7 +39,7 @@ model.summary()
 
 
 # fit the model
-history = model.fit(xtrain, ytrain, epochs=10, batch_size=16, validation_split=0.1, verbose=1)
+history = model.fit(xtrain, ytrain, epochs=50, batch_size=16, validation_split=0.1, verbose=1)
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
 plt.plot(history.history['val_loss'], label='Validation loss')
@@ -52,8 +52,17 @@ prediction = model.predict(xtest)
 
 
 a = a.actual_predicted_target_values(prediction)
-print(a[["Date","Close","predicted value"]])
-a.plot(x='Close', y='Date', kind='line')
-a.plot(x='predicted value', y='Date')
+print(a[["Date", "Close", "predicted value"]])
+
+# line plot for math marks
+ax = plt.gca()
+a.plot(kind='line',
+        x='Date',
+        y='Close',
+        color='green',ax=ax)
+a.plot(kind='line',
+        x='Date',
+        y='predicted value',
+        color='orange',ax=ax)
 plt.legend()
 plt.show()

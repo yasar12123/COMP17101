@@ -80,15 +80,20 @@ class SlidingWindow(object):
 
     def inverse_target_scaler(self, predictY):
         scalerY = self.scalerY
-        predictY_values = scalerY.inverse_transform(predictY)
+        predictY_list = scalerY.inverse_transform(predictY)
+        predictY_values = []
+        for x in predictY_list:
+            predictY_values.append(x[0])
 
         return predictY_values
 
     def actual_predicted_target_values(self, predictY):
         scalerY = self.scalerY
-        predictY_values = scalerY.inverse_transform(predictY)
+        predictY_list = scalerY.inverse_transform(predictY)
+        predictY_values = []
+        for x in predictY_list:
+            predictY_values.append(x[0])
         df = self.dfTestSplit[-len(predictY):].copy()
-        a = predictY_values
-        df['predicted value'] = predictY_values.tolist()
+        df['predicted value'] = predictY_values
 
-        return a
+        return df

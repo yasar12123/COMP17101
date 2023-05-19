@@ -28,7 +28,10 @@ print(xtest.shape)
 print(ytest.shape)
 
 
-b  = a.actual_predicted_target_values(ytest)
-
-print(np.array(b))
-#print(b[["Date","Close","predicted value"]])
+# line plot for math marks
+df.plot(kind='line',
+        x='datetime',
+        y='Close',
+        color='green')
+plt.legend()
+plt.show()
