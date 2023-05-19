@@ -3,6 +3,8 @@ from ClassSlidingWindow import SlidingWindow
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dense, Dropout
+from sklearn.metrics import mean_squared_error
+from math import sqrt
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -19,7 +21,7 @@ df['row_number'] = df.reset_index().index
 
 #split data sliding window
 a = SlidingWindow(df, ['datetime'], ['row_number', 'Open', 'High', 'Low'], ['Close'])
-xtrain, ytrain, xtest, ytest = a.split(0.8, 14, 1)
+xtrain, ytrain, xtest, ytest = a.split(0.8, 200, 1)
 
 
 print(xtrain.shape)
@@ -39,7 +41,7 @@ model.summary()
 
 
 # fit the model
-history = model.fit(xtrain, ytrain, epochs=50, batch_size=16, validation_split=0.1, verbose=1)
+history = model.fit(xtrain, ytrain, epochs=30, batch_size=32, validation_split=0.1, verbose=1)
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
 plt.plot(history.history['val_loss'], label='Validation loss')
@@ -50,9 +52,13 @@ plt.show()
 #make predictions
 prediction = model.predict(xtest)
 
-
 a = a.actual_predicted_target_values(prediction)
 print(a[["Date", "Close", "predicted value"]])
+
+
+# calculate RMSE
+rmse = sqrt(mean_squared_error(a[['Close']], a[['predicted value']]))
+print('Test RMSE: %.3f' % rmse)
 
 # line plot for math marks
 ax = plt.gca()
