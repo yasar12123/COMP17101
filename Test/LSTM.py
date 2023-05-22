@@ -1,4 +1,4 @@
-from ClassSlidingWindow import SlidingWindow
+from ClassTrainTestWindowSplit import Dataset
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM
@@ -13,15 +13,22 @@ import pandas as pd
 
 #Read the csv file
 df = pd.read_csv("BTC-USD.csv")
+
 #pre processing
 #datetime col
 df['datetime'] = pd.to_datetime(df["Date"], dayfirst=True)
 df['row_number'] = df.reset_index().index
+#create date features
+df['Year'] = df['datetime'].dt.year
+df['Month'] = df['datetime'].dt.month
+df['Week'] = df['datetime'].dt.isocalendar().week
+df['DayOfWeek'] = df['datetime'].dt.dayofweek
+df['Day'] = df['datetime'].dt.day
 #df = df[0:100]
 
 #split data sliding window
-a = SlidingWindow(df, ['datetime'], ['row_number', 'Open', 'High', 'Low'], ['Close'])
-xtrain, ytrain, xtest, ytest = a.split(0.8, 200, 1)
+a = Dataset(df, ['datetime'], ['row_number', 'Open', 'High', 'Low','Week','DayOfWeek'], ['Close'])
+xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 50, 1)
 
 
 print(xtrain.shape)
