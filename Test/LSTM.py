@@ -24,11 +24,14 @@ df['Month'] = df['datetime'].dt.month
 df['Week'] = df['datetime'].dt.isocalendar().week
 df['DayOfWeek'] = df['datetime'].dt.dayofweek
 df['Day'] = df['datetime'].dt.day
+#log return
+df['Log Return'] = np.log(df['Close']/df['Open'])
+df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
 #df = df[0:100]
 
 #split data sliding window
-a = Dataset(df, ['datetime'], ['row_number', 'Open', 'High', 'Low','Week','DayOfWeek'], ['Close'])
-xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 50, 1)
+a = Dataset(df, ['datetime'], ['Open', 'High', 'Low', 'Week', 'DayOfWeek', 'Day'], ['Log Return'])
+xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 200, 1)
 
 
 print(xtrain.shape)
@@ -48,7 +51,7 @@ model.summary()
 
 
 # fit the model
-history = model.fit(xtrain, ytrain, epochs=30, batch_size=32, validation_split=0.1, verbose=1)
+history = model.fit(xtrain, ytrain, epochs=50, batch_size=32, validation_split=0.1, verbose=1)
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
 plt.plot(history.history['val_loss'], label='Validation loss')
@@ -60,18 +63,17 @@ plt.show()
 prediction = model.predict(xtest)
 
 a = a.actual_predicted_target_values(prediction)
-print(a[["Date", "Close", "predicted value"]])
-
+print(a[["Date", "Log Return", "predicted value"]])
 
 # calculate RMSE
-rmse = sqrt(mean_squared_error(a[['Close']], a[['predicted value']]))
+rmse = sqrt(mean_squared_error(a[['Log Return']], a[['predicted value']]))
 print('Test RMSE: %.3f' % rmse)
 
-# line plot for math marks
+# line plot for actual and predictions
 ax = plt.gca()
 a.plot(kind='line',
         x='Date',
-        y='Close',
+        y='Log Return',
         color='green',ax=ax)
 a.plot(kind='line',
         x='Date',

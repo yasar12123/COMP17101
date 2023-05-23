@@ -1,4 +1,4 @@
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import pandas as pd
 
@@ -13,8 +13,8 @@ class Dataset(object):
         self.target = target
         self.dfTrainSplit = []
         self.dfTestSplit = []
-        self.scalerFeatures = StandardScaler()
-        self.scalerTarget = StandardScaler()
+        self.scalerFeatures = MinMaxScaler()
+        self.scalerTarget = MinMaxScaler()
         self.trainX = []
         self.trainY = []
         self.testX = []

@@ -25,7 +25,11 @@ df['Week'] = df['datetime'].dt.isocalendar().week
 df['DayOfWeek'] = df['datetime'].dt.dayofweek
 df['Day'] = df['datetime'].dt.day
 #df = df[0:100]
+df['Log Return'] = np.log(df['Close']/df['Open'])
+df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
+
+#print(df[['Date','Open', 'Close', 'Log Return','BullishBearish']])
 
 #split data sliding window
-a = Dataset(df, ['datetime'], ['row_number', 'Open', 'High', 'Low'], ['Close'])
+a = Dataset(df, ['datetime'], ['Open', 'High', 'Low'], ['Close'])
 xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 14, 1)
