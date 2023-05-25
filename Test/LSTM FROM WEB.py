@@ -21,7 +21,7 @@ import seaborn as sns
 # from datetime import datetime
 
 # Read the csv file
-df = pd.read_csv('BTC-USD.csv')
+df = pd.read_csv('../DS Project/BTC-USD.csv')
 #print(df.head())  # 7 columns, including the Date.
 
 # Separate dates for future plotting

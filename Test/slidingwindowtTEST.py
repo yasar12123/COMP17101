@@ -1,18 +1,11 @@
 from ClassTrainTestWindowSplit import Dataset
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Dense, Dropout
-from sklearn.metrics import mean_squared_error
-from math import sqrt
-
-from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
 
 #Read the csv file
-df = pd.read_csv("BTC-USD.csv")
+df = pd.read_csv("../DS Project/BTC-USD.csv")
 
 #pre processing
 #datetime col
