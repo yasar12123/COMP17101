@@ -1,14 +1,8 @@
-from SplitFunction import Dataset
 
-from sklearn.neighbors import KNeighborsClassifier
-
-
-from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-
+from keras.preprocessing.sequence import TimeseriesGenerator
 from sklearn.model_selection import train_test_split
-
 
 
 
@@ -38,27 +32,19 @@ df['Hour'] = df['datetime'].dt.hour
 df['prevClose'] = df['close'].shift(1)
 df['Log Return'] = np.log(df['close']/df['open'])
 df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
-#print(df.columns)
 
-a = Dataset(df, ['open', 'high', 'low'], ['BullishBearish'] )
-xtrain, ytrain, xtest, ytest = a.x_y_train_test_split(0.8)
+df2 = df.dropna()
+
+features = df[['open', 'high', 'low']].to_numpy().tolist()
+target = df['BullishBearish'].tolist()
+
+#split data into train and test
+x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=123, shuffle=False)
 
 
-print(xtrain.shape)
-print(ytrain.shape)
-print(xtest.shape)
-print(ytest.shape)
+#split into window series
+trainSplit = TimeseriesGenerator(x_train, y_train, length=7, sampling_rate=1, batch_size=1)
+testSplit = TimeseriesGenerator(x_test, y_test, length=7, sampling_rate=1, batch_size=1)
 
-clf = KNeighborsClassifier(7)  # Model the output based on 7 "nearest" examples
-clf.fit(xtrain, ytrain)
-
-y_pred = clf.predict(xtest)
-
-# _ = pd.DataFrame({'y_true': ytest, 'y_pred': y_pred}).plot(figsize=(15, 2), alpha=.7)
-# print('Classification accuracy: ', np.mean(ytest == y_pred))
-# plt.show()
-
-df2 = a.test_dataset_with_prediction(y_pred)
-
-print(df2)
+print(trainSplit)
 
