@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 
 #Read the csv file
-pre_df = pd.read_csv("Bitstamp_BTCUSD_1h.csv", header=1)
+pre_df = pd.read_csv("Gemini_BTCUSD_1h.csv", header=1)
 #datetime col
 pre_df['datetime'] = pd.to_datetime(pre_df["date"])
 #sorted df by datetime

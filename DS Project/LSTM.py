@@ -31,7 +31,7 @@ df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
 
 #split data sliding window
 a = Dataset(df, ['datetime'], ['Open', 'High', 'Low', 'Week', 'DayOfWeek', 'Day'], ['Log Return'])
-xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 200, 1)
+xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 50, 2)
 
 
 print(xtrain.shape)
@@ -51,7 +51,7 @@ model.summary()
 
 
 # fit the model
-history = model.fit(xtrain, ytrain, epochs=50, batch_size=32, validation_split=0.1, verbose=1)
+history = model.fit(xtrain, ytrain, epochs=30, batch_size=32, validation_split=0.1, verbose=1)
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
 plt.plot(history.history['val_loss'], label='Validation loss')
