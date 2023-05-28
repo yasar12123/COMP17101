@@ -36,6 +36,10 @@ df['PrevClose'] = df['close'].shift(1)
 df['Log Return'] = np.log(df['PrevClose']/df['close'])
 df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
 
+
+
+
+
 #TA indicators
 df['rsi'] = ta.rsi(df['open'], 14)
 df['rsiBelow20'] = df['rsi'].apply(lambda x: 1 if x <= 20 else 0)
