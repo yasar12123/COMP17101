@@ -22,7 +22,7 @@ dfRaw.drop('unix', axis=1, inplace=True)
 dfRaw.drop('symbol', axis=1, inplace=True)
 dfRaw.drop('date', axis=1, inplace=True)
 
-#df = df[:100]
+
 #create date features
 df['Date'] = df['datetime'].dt.date
 df['Year'] = df['datetime'].dt.year
@@ -31,28 +31,42 @@ df['Week'] = df['datetime'].dt.isocalendar().week
 df['DayOfWeek'] = df['datetime'].dt.dayofweek
 df['Day'] = df['datetime'].dt.day
 df['Hour'] = df['datetime'].dt.hour
-#misc
-df['PrevClose'] = df['close'].shift(1)
-df['Log Return'] = np.log(df['PrevClose']/df['close'])
-df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
+
+#aggregate into daily table
+aggregations = {'open': 'first',
+                'close': 'last',
+                'high': 'max',
+                'low': 'min',
+                'Volume BTC': 'sum',
+                'Volume USD': 'sum'}
+dfDaily = df.groupby('Date').agg(aggregations)
 
 
+#G
+dfDaily['NextClose'] = dfDaily['close'].shift(-1)
+#dfDaily['PercentChange'] = ((dfDaily['NextClose'] - dfDaily['close']) / dfDaily['close']) *100
+dfDaily['LogReturn'] = np.log(dfDaily['NextClose']/dfDaily['close']) *100
+dfDaily['BullishBearish'] = dfDaily['LogReturn'].apply(lambda x: 1 if x > 0.2 else 0)
 
 
 
 #TA indicators
-df['rsi'] = ta.rsi(df['open'], 14)
-df['rsiBelow20'] = df['rsi'].apply(lambda x: 1 if x <= 20 else 0)
-df['rsiAbove70'] = df['rsi'].apply(lambda x: 1 if x >= 80 else 0)
+dfDaily['rsi'] = ta.rsi(dfDaily['open'], 14)
+#df['rsiBelow20'] = df['rsi'].apply(lambda x: 1 if x <= 20 else 0)
+#df['rsiAbove70'] = df['rsi'].apply(lambda x: 1 if x >= 80 else 0)
 
-rsiBelow20 = df[df['rsiBelow20'] == 1]
-rsiAbove70 = df[df['rsiAbove70'] == 1]
-a = rsiBelow20.groupby('BullishBearish')['rsiBelow20'].count()
-b = rsiAbove70.groupby('BullishBearish')['rsiAbove70'].count()
-print('Bearish day - rsi below 20: {}'.format(a[0]),'\n'
-      'Bullish day - rsi below 20: {}'.format(a[1]))
-print('Bearish day - rsi above 70: {}'.format(b[0]),'\n'
-      'Bullish day - rsi above 70: {}'.format(b[1]))
+
+print(dfDaily)
+
+
+# rsiBelow20 = df[df['rsiBelow20'] == 1]
+# rsiAbove70 = df[df['rsiAbove70'] == 1]
+# a = rsiBelow20.groupby('BullishBearish')['rsiBelow20'].count()
+# b = rsiAbove70.groupby('BullishBearish')['rsiAbove70'].count()
+# print('Bearish day - rsi below 20: {}'.format(a[0]),'\n'
+#       'Bullish day - rsi below 20: {}'.format(a[1]))
+# print('Bearish day - rsi above 70: {}'.format(b[0]),'\n'
+#       'Bullish day - rsi above 70: {}'.format(b[1]))
 
 
 #daily open, close, high and low
@@ -61,10 +75,10 @@ print('Bearish day - rsi above 70: {}'.format(b[0]),'\n'
 
 #print(df[['Date', 'close', 'PrevClose', 'Log Return','BullishBearish']])
 
-#sns.lineplot(x='date', y='rsi', data=df)
-#sns.lineplot(df['rsiAbove70'])
-#sns.lineplot(df['Log Return'])
-sns.lineplot(df['close'])
-plt.show()
+#sns.boxplot(x='BullishBearish', y='rsi', data=dfDaily)
+# sns.lineplot(df['rsiAbove70'])
+# sns.lineplot(df['Log Return'])
+# sns.lineplot(df['close'])
+#plt.show()
 
 
