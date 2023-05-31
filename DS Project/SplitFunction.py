@@ -1,5 +1,7 @@
 from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
 import numpy as np
+from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 
 class Dataset(object):
     '''
@@ -36,9 +38,9 @@ class Dataset(object):
         self.dfTestSplit = test_split
 
         #scalers
-        scalerF = MinMaxScaler(feature_range=(0, 1))
+        scalerF = MinMaxScaler(feature_range=(-1, 1))
         scalerX = scalerF.fit(train_X)
-        scalerT = MinMaxScaler(feature_range=(0, 1))
+        scalerT = MinMaxScaler(feature_range=(-1, 1))
         scalerY = scalerT.fit(train_Y)
         self.scalerFeatures = scalerF
         self.scalerTarget = scalerT
@@ -74,6 +76,21 @@ class Dataset(object):
 
         return df
 
-
+    def classification_models(self, clf_names, classifiers, xtrain, ytrain, xtest, ytest):
+        scores = pd.DataFrame(columns=['name', 'precision (micro)', 'recall (micro)', 'fscore (micro)', 'support1'
+                                             , 'precision (micro)', 'recall (micro)', 'fscore (micro)', 'support2'
+                                             , 'mcc'])
+        for name, clf in zip(clf_names, classifiers):
+            print("fitting classifier", name)
+            clf.fit(xtrain, ytrain)
+            print("predicting labels for classifier", name)
+            Y_pred = clf.predict(xtest)
+            micro = precision_recall_fscore_support(ytest, Y_pred, average="micro")
+            macro = precision_recall_fscore_support(ytest, Y_pred, average="macro")
+            mcc = matthews_corrcoef(ytest, Y_pred)
+            scores.loc[len(scores)] = [name, micro[0], micro[1], micro[2], micro[3],
+                                             macro[0], macro[1], macro[2], macro[3],
+                                             mcc]
+        return scores
 
 

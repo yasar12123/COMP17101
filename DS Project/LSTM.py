@@ -30,7 +30,7 @@ df['BullishBearish'] = df['Log Return'].apply(lambda x: 1 if x > 0 else 0)
 #df = df[0:100]
 
 #split data sliding window
-a = Dataset(df, ['datetime'], ['Open', 'High', 'Low', 'Week', 'DayOfWeek', 'Day'], ['Log Return'])
+a = Dataset(df, ['datetime'], ['Open', 'Week', 'DayOfWeek', 'Day'], ['Log Return'])
 xtrain, ytrain, xtest, ytest = a.SlidingWindowSplit(0.8, 50, 2)
 
 

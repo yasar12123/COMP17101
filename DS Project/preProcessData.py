@@ -4,7 +4,6 @@ import pandas_ta as ta
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from sklearn.tree import DecisionTreeClassifier
 
 #Read the csv file
 dfRaw = pd.read_csv("Gemini_BTCUSD_1h.csv", header=1)
@@ -13,25 +12,23 @@ dfRaw = pd.read_csv("Gemini_BTCUSD_1h.csv", header=1)
 dfRaw['datetime'] = pd.to_datetime(dfRaw["date"])
 
 #sort by date
-df_sorted = dfRaw.sort_values(by=["datetime"], ascending=True)
+dfSorted = dfRaw.sort_values(by=["datetime"], ascending=True)
 #reset index
-df = df_sorted.reset_index(drop=True)
+dfSorted = dfSorted.reset_index(drop=True)
+#set datetime as index
+#dfSorted = dfSorted.set_index('datetime')
+
 
 #remove columns
-dfRaw.drop('unix', axis=1, inplace=True)
-dfRaw.drop('symbol', axis=1, inplace=True)
-dfRaw.drop('date', axis=1, inplace=True)
+dfSorted.drop('unix', axis=1, inplace=True)
+dfSorted.drop('symbol', axis=1, inplace=True)
+dfSorted.drop('date', axis=1, inplace=True)
 
+#create date/time features
+dfSorted['Date'] = dfSorted['datetime'].dt.date
+dfSorted['Hour'] = dfSorted['datetime'].dt.hour
 
-#create date features
-df['Date'] = df['datetime'].dt.date
-df['Year'] = df['datetime'].dt.year
-df['Month'] = df['datetime'].dt.month
-df['Week'] = df['datetime'].dt.isocalendar().week
-df['DayOfWeek'] = df['datetime'].dt.dayofweek
-df['Day'] = df['datetime'].dt.day
-df['Hour'] = df['datetime'].dt.hour
-
+#Daily table
 #aggregate into daily table
 aggregations = {'open': 'first',
                 'close': 'last',
@@ -39,46 +36,60 @@ aggregations = {'open': 'first',
                 'low': 'min',
                 'Volume BTC': 'sum',
                 'Volume USD': 'sum'}
-dfDaily = df.groupby('Date').agg(aggregations)
+dfDaily = dfSorted.groupby('Date', as_index=False).agg(aggregations)
+
+#create date features
+# convert the 'date' column to datetime format
+dfDaily['Date'] = pd.to_datetime(dfDaily["Date"])
+dfDaily['Year'] = dfDaily['Date'].dt.year
+dfDaily['Month'] = dfDaily['Date'].dt.month
+dfDaily['Week'] = dfDaily['Date'].dt.isocalendar().week
+dfDaily['DayOfWeek'] = dfDaily['Date'].dt.dayofweek
+dfDaily['DayOfMonth'] = dfDaily['Date'].dt.day
 
 
-#G
+#next day close price
 dfDaily['NextClose'] = dfDaily['close'].shift(-1)
-#dfDaily['PercentChange'] = ((dfDaily['NextClose'] - dfDaily['close']) / dfDaily['close']) *100
-dfDaily['LogReturn'] = np.log(dfDaily['NextClose']/dfDaily['close']) *100
-dfDaily['BullishBearish'] = dfDaily['LogReturn'].apply(lambda x: 1 if x > 0.2 else 0)
+#percetange increase/decrease between close price and nextClose price
+dfDaily['PercentChange'] = ((dfDaily['NextClose'] - dfDaily['close']) / dfDaily['close']) * 100
 
+#if percentage increase is greater than 0.25% then flag as 1 (bullish)
+#if percentage decrease is less than -0.25 then flag as -1 (bearish)
+#else 0 (no movement)
+
+#define conditions
+conditions = [ dfDaily['PercentChange'] >= 0.25,
+               dfDaily['PercentChange'] <= -0.25,
+              (dfDaily['PercentChange'] > -0.25) & (dfDaily['PercentChange'] < 0.25) ]
+#define results
+results = [1, -1, 0]
+#create feature
+dfDaily['BullishBearish'] = np.select(conditions, results)
 
 
 #TA indicators
-dfDaily['rsi'] = ta.rsi(dfDaily['open'], 14)
-#df['rsiBelow20'] = df['rsi'].apply(lambda x: 1 if x <= 20 else 0)
-#df['rsiAbove70'] = df['rsi'].apply(lambda x: 1 if x >= 80 else 0)
+dfDaily['RSI14'] = ta.rsi(dfDaily['close'], 14)
+dfDaily['EMA50'] = ta.ema(dfDaily['close'], 50)
+
+dfDaily = dfDaily.dropna()
+
+#view all columns
+#pd.set_option("display.max.columns", None)
+#print(dfDaily)
+#print(dfDaily['BullishBearish'].value_counts())
 
 
-print(dfDaily)
 
+#plots
+# sns.boxplot( x=dfDaily['BullishBearish'], y=dfDaily['RSI14'] )
+# plt.show()
 
-# rsiBelow20 = df[df['rsiBelow20'] == 1]
-# rsiAbove70 = df[df['rsiAbove70'] == 1]
-# a = rsiBelow20.groupby('BullishBearish')['rsiBelow20'].count()
-# b = rsiAbove70.groupby('BullishBearish')['rsiAbove70'].count()
-# print('Bearish day - rsi below 20: {}'.format(a[0]),'\n'
-#       'Bullish day - rsi below 20: {}'.format(a[1]))
-# print('Bearish day - rsi above 70: {}'.format(b[0]),'\n'
-#       'Bullish day - rsi above 70: {}'.format(b[1]))
-
-
-#daily open, close, high and low
-#dailyDf = df[['Date','Hour','open','close','high','low']]
-
-
-#print(df[['Date', 'close', 'PrevClose', 'Log Return','BullishBearish']])
-
-#sns.boxplot(x='BullishBearish', y='rsi', data=dfDaily)
-# sns.lineplot(df['rsiAbove70'])
-# sns.lineplot(df['Log Return'])
-# sns.lineplot(df['close'])
-#plt.show()
-
+# #heatmap correlation
+# corr_matrix = dfDaily.corr(method='spearman')
+# f, ax = plt.subplots(figsize=(16,8))
+# sns.heatmap(corr_matrix, annot=True, fmt='.2f', linewidth=0.4,
+#             annot_kws={"size": 10}, cmap='coolwarm', ax=ax)
+# plt.xticks(fontsize=10)
+# plt.yticks(fontsize=10)
+# plt.show()
 
