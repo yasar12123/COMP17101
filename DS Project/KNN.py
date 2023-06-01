@@ -1,4 +1,4 @@
-from SplitFunction import Dataset
+from ClassMachineLearning import Dataset
 
 from sklearn.neighbors import KNeighborsClassifier
 

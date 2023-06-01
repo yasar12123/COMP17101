@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 
-class Dataset(object):
+class dataset_features_target(object):
     '''
     '''
 
@@ -15,10 +15,10 @@ class Dataset(object):
         self.dfTestSplit = []
         self.scalerFeatures = MinMaxScaler()
         self.scalerTarget = MinMaxScaler()
-        self.trainX = []
-        self.trainY = []
-        self.testX = []
-        self.testY = []
+        self.x_train = []
+        self.y_train = []
+        self.x_test = []
+        self.y_test = []
         self.scalerX = 0
         self.scalerY = 0
 
@@ -47,7 +47,6 @@ class Dataset(object):
         self.scalerX = scalerX
         self.scalerY = scalerY
 
-
         #scale trainX testX
         train_X_scaled = scalerX.transform(train_X)
         test_X_scaled = scalerX.transform(test_X)
@@ -63,34 +62,49 @@ class Dataset(object):
         for x in test_Y_scaled:
             test_Y_scaled_final.append(x[0])
 
+        self.x_train, self.y_train = train_X_scaled, np.array(train_Y_scaled_final)
+        self.x_test, self.y_test = test_X_scaled, np.array(test_Y_scaled_final)
         return train_X_scaled, np.array(train_Y_scaled_final), test_X_scaled, np.array(test_Y_scaled_final)
 
-    def test_dataset_with_prediction(self, predictY):
+    def test_dataset_with_prediction(self, name, predictY):
         scalerY = self.scalerY
         predictY_list = scalerY.inverse_transform(predictY.reshape(-1, 1))
         predictY_values = []
         for x in predictY_list:
             predictY_values.append(x[0])
         df = self.dfTestSplit[-len(predictY):].copy()
-        df['predicted value'] = predictY_values
+        df[name+'predicted value'] = predictY_values
 
         return df
 
-    def classification_models(self, clf_names, classifiers, xtrain, ytrain, xtest, ytest):
+    def classification_models(self, clf_names, classifiers):
+        xtrain, ytrain, xtest, ytest = self.x_train, self.y_train, self.x_test, self.y_test
+        dfFinal = self.dfTestSplit[-len(ytest):].copy()
+        predictions = []
         scores = pd.DataFrame(columns=['name', 'precision (micro)', 'recall (micro)', 'fscore (micro)', 'support1'
-                                             , 'precision (micro)', 'recall (micro)', 'fscore (micro)', 'support2'
+                                             , 'precision (macro)', 'recall (macro)', 'fscore (macro)', 'support2'
                                              , 'mcc'])
         for name, clf in zip(clf_names, classifiers):
-            print("fitting classifier", name)
+            #fit model get pred
             clf.fit(xtrain, ytrain)
-            print("predicting labels for classifier", name)
             Y_pred = clf.predict(xtest)
-            micro = precision_recall_fscore_support(ytest, Y_pred, average="micro")
-            macro = precision_recall_fscore_support(ytest, Y_pred, average="macro")
-            mcc = matthews_corrcoef(ytest, Y_pred)
+            #inverse test and predict y
+            scalerY = self.scalerY
+            Y_pred_inv = scalerY.inverse_transform(Y_pred.reshape(-1, 1))
+            ytest_inv = scalerY.inverse_transform(ytest.reshape(-1, 1))
+            #calc score
+            micro = precision_recall_fscore_support(ytest_inv, Y_pred_inv, average="micro")
+            macro = precision_recall_fscore_support(ytest_inv, Y_pred_inv, average="macro")
+            mcc = matthews_corrcoef(ytest_inv, Y_pred_inv)
+            predictions.append([name, Y_pred_inv])
             scores.loc[len(scores)] = [name, micro[0], micro[1], micro[2], micro[3],
                                              macro[0], macro[1], macro[2], macro[3],
                                              mcc]
-        return scores
+            #inverse predict y with dataframe
+            dfPred = self.test_dataset_with_prediction(name, Y_pred)
+            #merge columns to final dataframe
+            dfFinal = pd.merge(dfFinal, dfPred[['Date', (name+'predicted value')]], on='Date', how='left')
+
+        return scores, dfFinal, predictions
 
 
