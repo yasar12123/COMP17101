@@ -13,8 +13,8 @@ class Dataset(object):
         self.target = target
         self.dfTrainSplit = []
         self.dfTestSplit = []
-        self.scalerFeatures = MinMaxScaler()
-        self.scalerTarget = MinMaxScaler()
+        self.scalerFeatures = MinMaxScaler(feature_range=(-1, 1))
+        self.scalerTarget = MinMaxScaler(feature_range=(-1, 1))
         self.trainX = []
         self.trainY = []
         self.testX = []
@@ -22,7 +22,7 @@ class Dataset(object):
         self.scalerX = 0
         self.scalerY = 0
 
-    def SlidingWindowSplit(self, split_ratio, steps_back, steps_forward):
+    def sliding_window_split(self, split_ratio, steps_back, steps_forward):
         #train split
         split = int(len(self.dataframe) * split_ratio)
         train_split = self.dataframe[:split]
