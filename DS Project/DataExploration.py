@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+import preProcessData
 
 
 #Read the csv file
-dfRaw = pd.read_csv("Gemini_BTCUSD_1h.csv", header=1)
+dfRaw = preProcessData.dfDaily #pd.read_csv("Gemini_BTCUSD_1h.csv", header=1)
 
 #to view all columns
 pd.set_option("display.max.columns", None)

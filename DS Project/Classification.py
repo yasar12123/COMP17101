@@ -5,12 +5,13 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 import pandas as pd
+import math
 
 from sklearn.metrics import confusion_matrix
 from sklearn import metrics
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -18,28 +19,52 @@ from sklearn.linear_model import LogisticRegression
 
 
 #split date into x y
-dataset = dataset_features_target(dfDaily, ['RSI14', 'EMA50', 'open'], ['BullishBearish'] )
+dataset = dataset_features_target(dfDaily, ['RSI14', 'EMA50', 'PrevPercentChange'], ['BullishBearish'] )
 xtrain, ytrain, xtest, ytest = dataset.x_y_train_test_split(0.8)
 
 
-#classification models
-classifiers = [KNeighborsClassifier(1),
-               KNeighborsClassifier(3),
-               DecisionTreeClassifier(max_depth=20),
-               DecisionTreeClassifier(max_depth=60),
-               RandomForestClassifier(n_estimators=1000, max_depth=5, random_state=1),
-               RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=1),
-               MLPClassifier(hidden_layer_sizes=(100, 100, 100), max_iter=10000, activation='relu'),
-               LogisticRegression(multi_class='multinomial', solver='lbfgs')]
+# #to get best knn
+# #method 1 sqrt of n
+# k = math.sqrt(len(xtrain))
+# #method 2 error rate
+# error_rate = []
+# for i in range(1,50):
+#     knn = KNeighborsClassifier(n_neighbors=i)
+#     knn.fit(xtrain, ytrain)
+#     pred = knn.predict(xtest)
+#     error_rate.append(np.mean(pred != ytest))
+#
+# plt.figure(figsize=(15,10))
+# plt.plot(range(1,50),error_rate, marker='o', markersize=9)
+# plt.show()
 
-clf_names = ["Nearest Neighbors (k=1)",
-             "Nearest Neighbors (k=3)",
-             "Decision Tree (Max Depth=20)",
+
+
+
+#classification models
+classifiers = [KNeighborsClassifier(4),
+               KNeighborsClassifier(12),
+               KNeighborsClassifier(47),
+               GaussianNB(),
+               DecisionTreeClassifier(max_depth=7, random_state=123),
+               DecisionTreeClassifier(max_depth=60, random_state=123),
+               RandomForestClassifier(n_estimators=1000, max_depth=5, random_state=123),
+               RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=123),
+               MLPClassifier(hidden_layer_sizes=(100, 100, 100), max_iter=10000, activation='relu', random_state=123),
+               LogisticRegression(multi_class='multinomial', solver='lbfgs', random_state=123),
+               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123) ]
+
+clf_names = ["Nearest Neighbors (k=4)",
+             "Nearest Neighbors (k=12)",
+             "Nearest Neighbors (k=47)",
+             "GaussianNB",
+             "Decision Tree (Max Depth=7)",
              "Decision Tree (Max Depth=60)",
              "Random Forest (Max Depth=5)",
              "Random Forest (Max Depth=20)",
              "MLP (RelU)",
-             "Logistic Regression"]
+             "Logistic Regression",
+             "LinearSVC"]
 
 
 #get the scores for the models

@@ -53,6 +53,11 @@ dfDaily['NextClose'] = dfDaily['close'].shift(-1)
 #percetange increase/decrease between close price and nextClose price
 dfDaily['PercentChange'] = ((dfDaily['NextClose'] - dfDaily['close']) / dfDaily['close']) * 100
 
+#next day close price
+dfDaily['PrevClose'] = dfDaily['close'].shift(1)
+#percetange increase/decrease between close price and nextClose price
+dfDaily['PrevPercentChange'] = ((dfDaily['PrevClose'] - dfDaily['close']) / dfDaily['close']) * 100
+
 #if percentage increase is greater than 0.25% then flag as 1 (bullish)
 #if percentage decrease is less than -0.25 then flag as -1 (bearish)
 #else 0 (no movement)
