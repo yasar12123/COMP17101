@@ -7,6 +7,7 @@ from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 from keras.layers import Dense, Dropout, Flatten, Reshape
 import keras
 import tensorflow as tf
+from keras.utils import to_categorical
 
 
 from matplotlib import pyplot as plt
@@ -76,26 +77,19 @@ print(xtest.shape)
 print(ytest.shape)
 
 
+# one hot encode y
+ytrain = to_categorical(ytrain)
+ytest = to_categorical(ytest)
 
-#LSTM Model
-model = Sequential()
-model.add(Bidirectional(LSTM(64, return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
-model.add(Bidirectional(LSTM(32)))
-model.add(Dense(5))
-model.add(Activation('softmax'))
-model.compile(loss='sparse_categorical_crossentropy', optimizer='RMSprop')
-model.summary()
-# fit the model
-history = model.fit(xtrain, ytrain, epochs=4, batch_size=32, validation_split=0.1, verbose=1, shuffle=False)
 
 
 
 
 
 #make predictions
-prediction = model.predict(xtest)
-dfWithPred = dataset.actual_predicted_target_values(prediction)
-print(dfWithPred[["Date", "BullishBearish", "predicted value"]])
+# prediction = model.predict(xtest)
+# dfWithPred = dataset.actual_predicted_target_values(prediction)
+# print(dfWithPred[["Date", "BullishBearish", "predicted value"]])
 
 
 
@@ -107,19 +101,19 @@ print(dfWithPred[["Date", "BullishBearish", "predicted value"]])
 
 
 # Plot Accuracy
-plt.plot(history.history['accuracy'])
-plt.plot(history.history['val_accuracy'])
-plt.title('Accuracy Model')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
-
-# Plot Loss
-plt.plot(history.history['loss'])
-plt.plot(history.history['val_loss'])
-plt.title('Loss Model')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+# plt.plot(history.history['accuracy'])
+# plt.plot(history.history['val_accuracy'])
+# plt.title('Accuracy Model')
+# plt.ylabel('accuracy')
+# plt.xlabel('epoch')
+# plt.legend(['train', 'test'], loc='upper left')
+# plt.show()
+#
+# # Plot Loss
+# plt.plot(history.history['loss'])
+# plt.plot(history.history['val_loss'])
+# plt.title('Loss Model')
+# plt.ylabel('loss')
+# plt.xlabel('epoch')
+# plt.legend(['train', 'test'], loc='upper left')
+# plt.show()

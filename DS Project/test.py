@@ -67,7 +67,7 @@ df = dfSorted.dropna()
 
 #split data sliding window
 dataset = Dataset(df, ['datetime'], ['open', 'Week', 'DayOfWeek', 'RSI14', 'EMA50'], ['BullishBearish'])
-xtrain, ytrain, xtest, ytest = dataset.sliding_window_split(0.8, 14, 1)
+xtrain, ytrain, xtest, ytest = dataset.sliding_window_split_classification(0.8, 14, 1)
 
 #train test shapes
 print(xtrain.shape)
@@ -75,33 +75,23 @@ print(ytrain.shape)
 print(xtest.shape)
 print(ytest.shape)
 
-from sklearn.preprocessing import LabelEncoder
-from keras.utils import np_utils
-# encode class values as integers
-encoder = LabelEncoder()
-encoder.fit(ytrain.reshape(len(ytrain)))
-encoded_Y = encoder.transform(ytrain.reshape(len(ytrain)))
-# convert integers to dummy variables (i.e. one hot encoded)
-dummy_y = np_utils.to_categorical(encoded_Y)
-
-print(dummy_y)
-
+verbose, epochs, batch_size = 0, 15, 32
+n_timesteps, n_features, n_outputs = xtrain.shape[1], xtrain.shape[2], ytrain.shape[1]
 model = Sequential()
-model.add(Dense(8, input_dim=5, activation='relu'))
-model.add(Dense(3, activation='softmax'))
-# Compile model
+model.add(LSTM(64, input_shape=(n_timesteps,n_features), return_sequences=True))
+model.add(LSTM(32, return_sequences=False))
+model.add(Dropout(0.2))
+model.add(Dense(n_outputs, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 model.summary()
-# fit the model
-history = model.fit(xtrain, dummy_y, epochs=3, batch_size=32, validation_split=0.1, verbose=1)
-#https://www.youtube.com/watch?v=PCgrgHgy26c
-#https://machinelearningmastery.com/multi-class-classification-tutorial-keras-deep-learning-library/
+# fit network
+history = model.fit(xtrain, ytrain, epochs=epochs, batch_size=batch_size, verbose=verbose)
 
+#plt training validation
+plt.plot(history.history['loss'], label='Training loss')
+plt.plot(history.history['val_loss'], label='Validation loss')
+plt.legend()
+plt.show()
 
-
-
-# prediction = model.predict(xtest)
-# dfWithPred = dataset.actual_predicted_target_values(prediction)
-# print(dfWithPred[["Date", "BullishBearish", "predicted value"]])
 
 
