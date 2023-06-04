@@ -100,7 +100,7 @@ class Dataset(object):
         #self.scalerY = scalerY
         #ome hot enconder
         from keras.utils import to_categorical
-        train_Y_scaled = to_categorical(train_Y)
+        train_Y_scaled = to_categorical(train_Y, 3)
 
         #number of steps to look back and forward
         n_future = steps_forward  # Number of days we want to look into the future based on the past days.
@@ -127,7 +127,7 @@ class Dataset(object):
         #scale trainY
         #test_Y_scaled = scalerY.transform(test_Y)
         #one hot encoder
-        test_Y_scaled = to_categorical(test_Y)
+        test_Y_scaled = to_categorical(test_Y, 3)
 
         #split test data into steps
         testX = []
@@ -152,6 +152,17 @@ class Dataset(object):
     def actual_predicted_target_values(self, predictY):
         scalerY = self.scalerY
         predictY_list = scalerY.inverse_transform(predictY)
+        predictY_values = []
+        for x in predictY_list:
+            predictY_values.append(x[0])
+        df = self.dfTestSplit[-len(predictY):].copy()
+        df['predicted value'] = predictY_values
+
+        return df
+
+
+    def actual_predicted_target_values_classification(self, predictY):
+        predictY_list = predictY
         predictY_values = []
         for x in predictY_list:
             predictY_values.append(x[0])

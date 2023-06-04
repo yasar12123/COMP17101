@@ -7,6 +7,10 @@ from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 from keras.layers import Dense, Dropout, Flatten, Reshape
 import keras
 import tensorflow as tf
+from keras.models import Model
+from keras.layers import Dense, Activation, LSTM, GRU, Dropout, Input
+from keras.optimizers import SGD, Adam, optimizer
+from keras import optimizers
 
 
 from matplotlib import pyplot as plt
@@ -75,23 +79,42 @@ print(ytrain.shape)
 print(xtest.shape)
 print(ytest.shape)
 
-verbose, epochs, batch_size = 0, 15, 32
-n_timesteps, n_features, n_outputs = xtrain.shape[1], xtrain.shape[2], ytrain.shape[1]
+# Model
+# Initialize LSTM model
 model = Sequential()
-model.add(LSTM(64, input_shape=(n_timesteps,n_features), return_sequences=True))
-model.add(LSTM(32, return_sequences=False))
+model.add(LSTM(64, activation='relu', input_shape=(14, 5)))
 model.add(Dropout(0.2))
-model.add(Dense(n_outputs, activation='softmax'))
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.add(Dense(3, activation='softmax'))
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
-# fit network
-history = model.fit(xtrain, ytrain, epochs=epochs, batch_size=batch_size, verbose=verbose)
+
+# model = Sequential()
+# model.add(Dense(60, input_shape = (14,5), activation = "relu"))
+# #model.add(Dense(15, activation = "relu"))
+# model.add(Dropout(0.2))
+# model.add(Dense(3, activation = "softmax"))
+# model.compile(Adam(lr = 0.01), "categorical_crossentropy", metrics = ["accuracy"])
+# model.summary()
+
+history = model.fit(xtrain, ytrain, epochs=1, validation_split=0.1, verbose=1)
 
 #plt training validation
-plt.plot(history.history['loss'], label='Training loss')
-plt.plot(history.history['val_loss'], label='Validation loss')
-plt.legend()
-plt.show()
+# plt.plot(history.history['loss'], label='Training loss')
+# plt.plot(history.history['val_loss'], label='Validation loss')
+# plt.legend()
+# plt.show()
+
+#make predictions
+predictions = np.argmax(model.predict(xtest), axis=-1)
+
+print(predictions)
+# from sklearn.metrics import confusion_matrix
+# y_pred = model.predict(xtest)
+# y_test_class = np.argmax(ytest, axis=1)
+# confusion_matrix(y_test_class, y_pred_class)
 
 
+
+# a = dataset.actual_predicted_target_values_classification(prediction)
+# print(a[["Date", "BullishBearish", "predicted value"]])
 
