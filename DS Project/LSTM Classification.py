@@ -16,7 +16,7 @@ import pandas_ta as ta
 
 #paramters for train test window split
 dataframe = dfDaily
-features = ['close', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
+features = ['close', 'PrevPercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
 target = ['BullishBearish']
 split_ratio = 0.8  # percentage for training
 n_future = 1  # Number of days we want to look into the future based on the past days.
@@ -34,7 +34,7 @@ test_X_df = test_split[features]
 test_Y_df = test_split[target]
 
 #scale data using min max scaler
-scalerF = MinMaxScaler()
+scalerF = MinMaxScaler(feature_range=(-1,1))
 scalerX = scalerF.fit(train_X_df)
 train_X_scaled = scalerX.transform(train_X_df)
 test_X_scaled = scalerX.transform(test_X_df)
@@ -76,7 +76,7 @@ print(ytest.shape)
 model = Sequential()
 model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
 model.add(Bidirectional(LSTM(32, activation='relu')))
-#model.add(Dropout(0.2))
+model.add(Dropout(0.1))
 model.add(Dense(ytrain.shape[1], activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 model.summary()
@@ -90,14 +90,11 @@ plt.plot(history.history['val_loss'], label='Validation loss')
 plt.legend()
 plt.show()
 
-#make predictions and reverse to_categorical
+#make predictions and reverse to_categorical labels
 pred = model.predict(xtest)
 y_predictions = np.argmax(pred, axis=-1)
-print(y_predictions)
-
 #reverse to_categorical for ytest
 rev_cat_ytest = np.argmax(ytest, axis=-1)
-print(rev_cat_ytest)
 
 
 # Calculate classification metric scores
@@ -112,10 +109,17 @@ scores.loc[len(scores)] = ['BI-LSTM', micro[0], micro[1], micro[2], micro[3],
 pd.set_option("display.max.columns", None)
 print(scores)
 
+# Create bar plot for scores
+ax = plt.gca()
+scores.plot(kind='barh', x='name', y=scores.columns[1:], ax=ax, figsize=(20,10))
+for container in ax.containers:
+    ax.bar_label(container)
+plt.legend()
+plt.show()
 
 #plot confusion matrix
 cm = confusion_matrix(rev_cat_ytest,  y_predictions)
-cm_df = pd.DataFrame(cm, index=[1, 2, 3], columns=['1', '2', '3'])
+cm_df = pd.DataFrame(cm, index=[3, 2, 1], columns=['Bullish', 'Bearish', 'Neutral'])
 # Plotting the confusion matrix
 plt.figure(figsize=(5, 4))
 sns.heatmap(cm_df, annot=True)

@@ -5,6 +5,9 @@ from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 
 class dataset_features_target(object):
     '''
+    This class can be used to fee in the dataframe, with features and target values, it can then split
+    the x,y, train,test, scale the data using MinMaxScaler (feature range -1, 1). This can then further
+    train models with the data, create predictions and then compares the results.
     '''
 
     def __init__(self, dataframe, features, target):
@@ -13,8 +16,8 @@ class dataset_features_target(object):
         self.target = target
         self.dfTrainSplit = []
         self.dfTestSplit = []
-        self.scalerFeatures = MinMaxScaler()
-        self.scalerTarget = MinMaxScaler()
+        self.scalerFeatures = MinMaxScaler(feature_range=(-1, 1))
+        self.scalerTarget = MinMaxScaler(feature_range=(-1, 1))
         self.x_train = []
         self.y_train = []
         self.x_test = []
@@ -38,16 +41,14 @@ class dataset_features_target(object):
         self.dfTestSplit = test_split
 
         #scalers
-        scalerF = MinMaxScaler(feature_range=(-1, 1))
+        scalerF = self.scalerFeatures
         scalerX = scalerF.fit(train_X)
-        scalerT = MinMaxScaler(feature_range=(-1, 1))
-        scalerY = scalerT.fit(train_Y)
-        self.scalerFeatures = scalerF
-        self.scalerTarget = scalerT
         self.scalerX = scalerX
+        scalerT = self.scalerTarget
+        scalerY = scalerT.fit(train_Y)
         self.scalerY = scalerY
 
-        #scale trainX testX
+        # scale trainX testX
         train_X_scaled = scalerX.transform(train_X)
         test_X_scaled = scalerX.transform(test_X)
         # scale trainY testY
@@ -66,6 +67,14 @@ class dataset_features_target(object):
         self.x_test, self.y_test = test_X_scaled, np.array(test_Y_scaled_final)
         return train_X_scaled, np.array(train_Y_scaled_final), test_X_scaled, np.array(test_Y_scaled_final)
 
+    def inverse_y_scaler(self, y):
+        scalerY = self.scalerY
+        Y_list = scalerY.inverse_transform(y.reshape(-1, 1))
+        Y_values = []
+        for x in Y_list:
+            Y_values.append(x[0])
+        return np.array(Y_values)
+
     def test_dataset_with_prediction(self, name, predictY):
         scalerY = self.scalerY
         predictY_list = scalerY.inverse_transform(predictY.reshape(-1, 1))
@@ -73,7 +82,7 @@ class dataset_features_target(object):
         for x in predictY_list:
             predictY_values.append(x[0])
         df = self.dfTestSplit[-len(predictY):].copy()
-        df[name+'predicted value'] = predictY_values
+        df[name+' PredictedValue'] = predictY_values
 
         return df
 
@@ -81,17 +90,17 @@ class dataset_features_target(object):
         xtrain, ytrain, xtest, ytest = self.x_train, self.y_train, self.x_test, self.y_test
         dfFinal = self.dfTestSplit[-len(ytest):].copy()
         predictions = []
-        scores = pd.DataFrame(columns=['name', 'precision (micro)', 'recall (micro)', 'fscore (micro)', 'support1'
-                                             , 'precision (macro)', 'recall (macro)', 'fscore (macro)', 'support2'
+        scores = pd.DataFrame(columns=['name', 'precision (micro)', 'recall (micro)', 'fscore (micro)', 'support (micro)'
+                                             , 'precision (macro)', 'recall (macro)', 'fscore (macro)', 'support (macro)'
                                              , 'mcc'])
         for name, clf in zip(clf_names, classifiers):
             #fit model get pred
+            print(f'running model: {name}')
             clf.fit(xtrain, ytrain)
             Y_pred = clf.predict(xtest)
             #inverse test and predict y
-            scalerY = self.scalerY
-            Y_pred_inv = scalerY.inverse_transform(Y_pred.reshape(-1, 1))
-            ytest_inv = scalerY.inverse_transform(ytest.reshape(-1, 1))
+            Y_pred_inv = self.inverse_y_scaler(Y_pred)
+            ytest_inv = self.inverse_y_scaler(ytest)
             #calc score
             micro = precision_recall_fscore_support(ytest_inv, Y_pred_inv, average="micro")
             macro = precision_recall_fscore_support(ytest_inv, Y_pred_inv, average="macro")
@@ -103,7 +112,7 @@ class dataset_features_target(object):
             #inverse predict y with dataframe
             dfPred = self.test_dataset_with_prediction(name, Y_pred)
             #merge columns to final dataframe
-            dfFinal = pd.merge(dfFinal, dfPred[['Date', (name+'predicted value')]], on='Date', how='left')
+            dfFinal = pd.merge(dfFinal, dfPred[['Date', (name+' PredictedValue')]], on='Date', how='left')
 
         return scores, dfFinal, predictions
 
