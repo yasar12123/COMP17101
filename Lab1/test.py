@@ -2,13 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from keras.utils import to_categorical
 
-# convert the data into a data frame
-boston_df = pd.read_csv("boston.csv")
-pd.set_option("display.max.columns", None)
-#print(boston_df.describe())
+label = [0,1,2,0,1,0,2,2]
+label = to_categorical(label, 3)
+print(label)
+label = np.argmax(label, axis=-1)
 
-
-
-sns.heatmap(boston_df['CRIM'])
-plt.show()
+print(label)

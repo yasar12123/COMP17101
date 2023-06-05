@@ -8,7 +8,6 @@ import pandas as pd
 import math
 
 from sklearn.metrics import confusion_matrix
-from sklearn import metrics
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
@@ -19,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 #split date into x y
-dataset = dataset_features_target(dfDaily, ['RSI14', 'EMA50', 'PrevPercentChange'], ['BullishBearish'] )
+dataset = dataset_features_target(dfDaily, ['RSI14', 'EMA14', 'PrevPercentChange'], ['BullishBearish'] )
 xtrain, ytrain, xtest, ytest = dataset.x_y_train_test_split(0.8)
 
 
@@ -88,12 +87,13 @@ plt.legend()
 plt.show()
 
 
-#plot confusion matrix
+
+# #plot confusion matrix
 for x in predictions:
     cm = confusion_matrix(ytest,  x[1])
     cm_df = pd.DataFrame(cm,
-                         index=[-1, 0, 1],
-                         columns=['-1', '0', '1'])
+                         index=[3, 2, 1],
+                         columns=['3', '2', '1'])
     # Plotting the confusion matrix
     plt.figure(figsize=(5, 4))
     sns.heatmap(cm_df, annot=True)
