@@ -16,11 +16,11 @@ import pandas_ta as ta
 
 #paramters for train test window split
 dataframe = dfDaily
-features = ['close', 'PrevPercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
+features = ['PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
 target = ['BullishBearish']
 split_ratio = 0.8  # percentage for training
 n_future = 1  # Number of days we want to look into the future based on the past days.
-n_past = 14   # Number of past days we want to use to predict the future.
+n_past = 30   # Number of past days we want to use to predict the future.
 
 #train df split
 split = int(len(dataframe) * split_ratio)
@@ -82,7 +82,7 @@ model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accur
 model.summary()
 
 # Train the model
-history = model.fit(xtrain, ytrain, epochs=20, batch_size=32, validation_split=0.1)
+history = model.fit(xtrain, ytrain, epochs=300, batch_size=32, validation_split=0.1)
 
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
@@ -119,7 +119,7 @@ plt.show()
 
 #plot confusion matrix
 cm = confusion_matrix(rev_cat_ytest,  y_predictions)
-cm_df = pd.DataFrame(cm, index=[3, 2, 1], columns=['Bullish', 'Bearish', 'Neutral'])
+cm_df = pd.DataFrame(cm, index=[3, 2, 1], columns=['3', '2', '1'])
 # Plotting the confusion matrix
 plt.figure(figsize=(5, 4))
 sns.heatmap(cm_df, annot=True)

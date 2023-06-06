@@ -15,10 +15,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
+import xgboost as xgb
 
 
 #split date into x y
-dataset = dataset_features_target(dfDaily, ['close', 'PrevPercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['BullishBearish'] )
+dataset = dataset_features_target(dfDaily, ['close', 'PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['NextDayBullishBearish'] )
 xtrain, ytrain, xtest, ytest = dataset.x_y_train_test_split(0.8)
 
 
@@ -51,7 +52,8 @@ classifiers = [KNeighborsClassifier(4),
                RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=123),
                MLPClassifier(hidden_layer_sizes=(100, 100, 100), max_iter=10000, activation='relu', random_state=123),
                LogisticRegression(multi_class='multinomial', solver='lbfgs', random_state=123),
-               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123) ]
+               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123),
+               xgb.XGBClassifier()]
 
 clf_names = ["Nearest Neighbors (k=4)",
              "Nearest Neighbors (k=12)",
@@ -63,7 +65,8 @@ clf_names = ["Nearest Neighbors (k=4)",
              "Random Forest (Max Depth=20)",
              "MLP (RelU)",
              "Logistic Regression",
-             "LinearSVC"]
+             "LinearSVC",
+             "XGB Classifier"]
 
 
 #get the scores for the models
@@ -95,7 +98,7 @@ plt.show()
 #     cm = confusion_matrix(dataset.inverse_y_scaler(ytest),  x[1])
 #     cm_df = pd.DataFrame(cm,
 #                          index=[3, 2, 1],
-#                          columns=['Bullish', 'Bearish', 'Neutral'])
+#                          columns=['3', '2', '1'])
 #
 #     # Plotting the confusion matrix
 #     plt.figure(figsize=(5, 4))

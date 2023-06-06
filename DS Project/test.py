@@ -1,23 +1,28 @@
+#from preProcessData import dfDaily
+from getData import dfDaily
+from sklearn.preprocessing import MinMaxScaler
+from keras.utils import to_categorical
+from keras.models import Sequential
+from keras.layers import LSTM, Bidirectional, Dense, Dropout
+
+from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from keras.models import Sequential
-from keras.layers import Conv1D, MaxPooling1D, LSTM, Dense, Dropout, Bidirectional
-from keras.preprocessing.sequence import TimeseriesGenerator
-from keras.utils import to_categorical
-from preProcessData import dfDaily
-from sklearn.preprocessing import MinMaxScaler
-from matplotlib import pyplot as plt
+import pandas_ta as ta
+
 
 
 
 #paramters for train test window split
 dataframe = dfDaily
-features = ['close', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA50', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
+features = ['PercentChange', 'Volume', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
 target = ['BullishBearish']
 split_ratio = 0.8  # percentage for training
 n_future = 1  # Number of days we want to look into the future based on the past days.
-n_past = 14   # Number of past days we want to use to predict the future.
+n_past = 30   # Number of past days we want to use to predict the future.
 
 #train df split
 split = int(len(dataframe) * split_ratio)
@@ -31,7 +36,7 @@ test_X_df = test_split[features]
 test_Y_df = test_split[target]
 
 #scale data using min max scaler
-scalerF = MinMaxScaler()
+scalerF = MinMaxScaler(feature_range=(-1,1))
 scalerX = scalerF.fit(train_X_df)
 train_X_scaled = scalerX.transform(train_X_df)
 test_X_scaled = scalerX.transform(test_X_df)
@@ -40,12 +45,26 @@ test_X_scaled = scalerX.transform(test_X_df)
 train_Y_encoded = to_categorical(train_Y_df)
 test_Y_encoded = to_categorical(test_Y_df)
 
+#rearrange train data into sliding window
+trainX = []
+trainY = []
+for i in range(n_past, len(train_X_scaled) - n_future + 1):
+    trainX.append(train_X_scaled[i - n_past:i])
+    trainY.append(train_Y_encoded[i + n_future - 1])
+
+#rearrange test data into sliding window
+testX = []
+testY = []
+for i in range(n_past, len(test_X_scaled) - n_future + 1):
+    testX.append(test_X_scaled[i - n_past:i])
+    testY.append(test_Y_encoded[i + n_future - 1])
 
 #convert to numpy array
-xtrain = np.array(train_X_scaled)
-ytrain = np.array(train_Y_encoded)
-xtest = np.array(test_X_scaled)
-ytest = np.array(test_Y_encoded)
+xtrain = np.array(trainX)
+ytrain = np.array(trainY)
+xtest = np.array(testX)
+ytest = np.array(testY)
+
 
 #train test shapes
 print(xtrain.shape)
@@ -53,71 +72,61 @@ print(ytrain.shape)
 print(xtest.shape)
 print(ytest.shape)
 
-# Define the time series generator
-time_steps = 10  # Number of previous time steps to consider
-batch_size = 32
-train_generator = TimeseriesGenerator(xtrain, ytrain, length=time_steps, batch_size=batch_size)
-test_generator = TimeseriesGenerator(xtest, ytest, length=time_steps, batch_size=batch_size)
 
 
-# Define the model
+# Model
 model = Sequential()
-model.add(Conv1D(filters=64, kernel_size=3, input_shape=(time_steps, xtrain.shape[1])))
-model.add(MaxPooling1D(pool_size=2))
-model.add(Conv1D(filters=64, kernel_size=3))
-model.add(MaxPooling1D(pool_size=2))
-model.add(Bidirectional(LSTM(64, return_sequences=True)))
-model.add(Bidirectional(LSTM(64)))
-model.add(Dense(64, activation='relu'))
-model.add(Dropout(0.2))
+model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
+model.add(Bidirectional(LSTM(32, activation='relu')))
+model.add(Dropout(0.1))
 model.add(Dense(ytrain.shape[1], activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 model.summary()
 
 # Train the model
-history = model.fit_generator(train_generator, epochs=2)
-
+history = model.fit(xtrain, ytrain, epochs=100, batch_size=32, validation_split=0.1)
 
 #plt training validation
-# plt.plot(history.history['loss'], label='Training loss')
-# plt.plot(history.history['val_loss'], label='Validation loss')
-# plt.legend()
-# plt.show()
+plt.plot(history.history['loss'], label='Training loss')
+plt.plot(history.history['val_loss'], label='Validation loss')
+plt.legend()
+plt.show()
 
-#make predictions and reverse to_categorical
-y_predictions = np.argmax(model.predict(test_generator), axis=-1)
-print(y_predictions)
+#make predictions and reverse to_categorical labels
+pred = model.predict(xtest)
+y_predictions = np.argmax(pred, axis=-1)
+#reverse to_categorical for ytest
+rev_cat_ytest = np.argmax(ytest, axis=-1)
 
 
+# Calculate classification metric scores
+micro = precision_recall_fscore_support(rev_cat_ytest, y_predictions, average="micro")
+macro = precision_recall_fscore_support(rev_cat_ytest, y_predictions, average="macro")
+mcc = matthews_corrcoef(rev_cat_ytest, y_predictions)
+scores = pd.DataFrame(columns=['name','precision (micro)', 'recall (micro)', 'fscore (micro)', 'support1',
+                               'precision (macro)', 'recall (macro)', 'fscore (macro)', 'support2', 'mcc'])
+scores.loc[len(scores)] = ['BI-LSTM', micro[0], micro[1], micro[2], micro[3],
+                            macro[0], macro[1], macro[2], macro[3], mcc]
 
-#
-# #reverse to_categorical for yest
-# rev_cat_ytest = np.argmax(ytest, axis=-1)
-# print(rev_cat_ytest)
-#
-#
-# # Calculate classification metrics
-# micro = precision_recall_fscore_support(rev_cat_ytest, y_predictions, average="micro")
-# macro = precision_recall_fscore_support(rev_cat_ytest, y_predictions, average="macro")
-# mcc = matthews_corrcoef(rev_cat_ytest, y_predictions)
-# scores = pd.DataFrame(columns=['name','precision (micro)', 'recall (micro)', 'fscore (micro)', 'support1',
-#                                'precision (macro)', 'recall (macro)', 'fscore (macro)', 'support2', 'mcc'])
-# scores.loc[len(scores)] = ['BI-LSTM', micro[0], micro[1], micro[2], micro[3],
-#                             macro[0], macro[1], macro[2], macro[3], mcc]
-#
-#
-#
-# pd.set_option("display.max.columns", None)
-# print(scores)
-#
-# #plot confusion matrix
-# cm = confusion_matrix(rev_cat_ytest,  y_predictions)
-# cm_df = pd.DataFrame(cm, index=[3, 2, 1], columns=['3', '2', '1'])
-# # Plotting the confusion matrix
-# plt.figure(figsize=(5, 4))
-# sns.heatmap(cm_df, annot=True)
-# plt.title('Confusion Matrix - BI-LSTM')
-# plt.ylabel('Actual Values')
-# plt.xlabel('Predicted Values')
-# plt.show()
-#
+pd.set_option("display.max.columns", None)
+print(scores)
+
+# Create bar plot for scores
+ax = plt.gca()
+scores.plot(kind='barh', x='name', y=scores.columns[1:], ax=ax, figsize=(20,10))
+for container in ax.containers:
+    ax.bar_label(container)
+plt.legend()
+plt.show()
+
+#plot confusion matrix
+cm = confusion_matrix(rev_cat_ytest,  y_predictions)
+cm_df = pd.DataFrame(cm, index=[3, 2, 1], columns=['3', '2', '1'])
+# Plotting the confusion matrix
+plt.figure(figsize=(5, 4))
+sns.heatmap(cm_df, annot=True)
+plt.title('Confusion Matrix - BI-LSTM')
+plt.ylabel('Actual Values')
+plt.xlabel('Predicted Values')
+plt.show()
+
