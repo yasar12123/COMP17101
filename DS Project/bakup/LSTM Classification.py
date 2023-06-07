@@ -1,9 +1,8 @@
-#from preProcessData import dfDaily
-from getData import dfSorted
+from preProcessData import dfDaily
 from sklearn.preprocessing import MinMaxScaler
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.layers import LSTM, Bidirectional, Dense, Dropout, BatchNormalization
+from keras.layers import LSTM, Bidirectional, Dense, Dropout
 
 from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 from sklearn.metrics import confusion_matrix
@@ -16,12 +15,12 @@ import pandas_ta as ta
 
 
 #paramters for train test window split
-dataframe = dfSorted
-features = ['LogReturn', 'LogReturnN-1', 'LogReturnN-2', 'RSI14', 'EMA200', 'EMA100', 'EMA50', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
+dataframe = dfDaily
+features = ['PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
 target = ['BullishBearish']
 split_ratio = 0.8  # percentage for training
 n_future = 1  # Number of days we want to look into the future based on the past days.
-n_past = 200   # Number of past days we want to use to predict the future.
+n_past = 30   # Number of past days we want to use to predict the future.
 
 #train df split
 split = int(len(dataframe) * split_ratio)
@@ -35,7 +34,7 @@ test_X_df = test_split[features]
 test_Y_df = test_split[target]
 
 #scale data using min max scaler
-scalerF = MinMaxScaler(feature_range=(0,1))
+scalerF = MinMaxScaler(feature_range=(-1,1))
 scalerX = scalerF.fit(train_X_df)
 train_X_scaled = scalerX.transform(train_X_df)
 test_X_scaled = scalerX.transform(test_X_df)
@@ -75,17 +74,15 @@ print(ytest.shape)
 
 # Model
 model = Sequential()
-model.add(Bidirectional(LSTM(100, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
-model.add(Dropout(0.2))
-model.add(Bidirectional(LSTM(64, activation='relu')))
-model.add(Dropout(0.2))
-model.add(Dense(units=64, activation='relu'))
-model.add(Dropout(0.2))
+model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
+model.add(Bidirectional(LSTM(32, activation='relu')))
+model.add(Dropout(0.1))
 model.add(Dense(ytrain.shape[1], activation='softmax'))
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 model.summary()
+
 # Train the model
-history = model.fit(xtrain, ytrain, epochs=30, batch_size=32, validation_split=0.2)
+history = model.fit(xtrain, ytrain, epochs=300, batch_size=32, validation_split=0.1)
 
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')
@@ -122,7 +119,7 @@ plt.show()
 
 #plot confusion matrix
 cm = confusion_matrix(rev_cat_ytest,  y_predictions)
-cm_df = pd.DataFrame(cm, index=[4, 3, 2, 1, 0], columns=['4', '3', '2', '1', '0'])
+cm_df = pd.DataFrame(cm, index=[3, 2, 1], columns=['3', '2', '1'])
 # Plotting the confusion matrix
 plt.figure(figsize=(5, 4))
 sns.heatmap(cm_df, annot=True)

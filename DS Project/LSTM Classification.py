@@ -2,7 +2,7 @@ from preProcessData import dfDaily
 from sklearn.preprocessing import MinMaxScaler
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.layers import LSTM, Bidirectional, Dense, Dropout
+from keras.layers import LSTM, Bidirectional, Dense, Dropout, CuDNNLSTM, BatchNormalization
 
 from sklearn.metrics import precision_recall_fscore_support, matthews_corrcoef
 from sklearn.metrics import confusion_matrix
@@ -20,7 +20,7 @@ features = ['PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOC
 target = ['BullishBearish']
 split_ratio = 0.8  # percentage for training
 n_future = 1  # Number of days we want to look into the future based on the past days.
-n_past = 30   # Number of past days we want to use to predict the future.
+n_past = 14   # Number of past days we want to use to predict the future.
 
 #train df split
 split = int(len(dataframe) * split_ratio)
@@ -34,7 +34,7 @@ test_X_df = test_split[features]
 test_Y_df = test_split[target]
 
 #scale data using min max scaler
-scalerF = MinMaxScaler(feature_range=(-1,1))
+scalerF = MinMaxScaler(feature_range=(0,1))
 scalerX = scalerF.fit(train_X_df)
 train_X_scaled = scalerX.transform(train_X_df)
 test_X_scaled = scalerX.transform(test_X_df)
@@ -72,17 +72,31 @@ print(ytest.shape)
 
 
 
-# Model
 model = Sequential()
-model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
-model.add(Bidirectional(LSTM(32, activation='relu')))
-model.add(Dropout(0.1))
+model.add(Bidirectional(LSTM(100, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
+model.add(Bidirectional(LSTM(100, activation='relu')))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
+model.add(Dense(units=100, activation='relu'))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
 model.add(Dense(ytrain.shape[1], activation='softmax'))
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-model.summary()
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Model
+# model = Sequential()
+# model.add(Bidirectional(LSTM(200, activation='relu', return_sequences=True), input_shape=(xtrain.shape[1], xtrain.shape[2])))
+# model.add(Dropout(0.2))
+# model.add(Bidirectional(LSTM(100, activation='relu')))
+# model.add(Dropout(0.2))
+# model.add(Dense(ytrain.shape[1], activation='softmax'))
+# model.compile(loss='categorical_crossentropy', optimizer='Nadam', metrics=['accuracy'])
+# model.summary()
 
 # Train the model
-history = model.fit(xtrain, ytrain, epochs=300, batch_size=32, validation_split=0.1)
+history = model.fit(xtrain, ytrain, epochs=100, batch_size=32, validation_split=0.1)
 
 #plt training validation
 plt.plot(history.history['loss'], label='Training loss')

@@ -5,6 +5,7 @@ import pandas as pd
 import pandas_ta as ta
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 
 #Read the csv file
@@ -21,80 +22,61 @@ dfSorted = dfSorted.reset_index(drop=True)
 #dfSorted = dfSorted.set_index('datetime')
 
 
-#remove columns
-# dfSorted.drop('unix', axis=1, inplace=True)
-# dfSorted.drop('symbol', axis=1, inplace=True)
-# dfSorted.drop('date', axis=1, inplace=True)
-
-#create date/time features
-dfSorted['Date'] = dfSorted['datetime'].dt.date
-dfSorted['Hour'] = dfSorted['datetime'].dt.hour
-
-dfDaily = dfSorted
-#create date features
 # convert the 'date' column to datetime format
-dfDaily['Date'] = pd.to_datetime(dfDaily["Date"])
-dfDaily['Year'] = dfDaily['Date'].dt.year
-dfDaily['Month'] = dfDaily['Date'].dt.month
-dfDaily['Week'] = dfDaily['Date'].dt.isocalendar().week
-dfDaily['DayOfWeek'] = dfDaily['Date'].dt.dayofweek
-dfDaily['DayOfMonth'] = dfDaily['Date'].dt.day
+dfSorted['Date'] = pd.to_datetime(dfSorted["datetime"])
+dfSorted['Year'] = dfSorted['Date'].dt.year
+dfSorted['Month'] = dfSorted['Date'].dt.month
+dfSorted['Week'] = dfSorted['Date'].dt.isocalendar().week
+dfSorted['DayOfWeek'] = dfSorted['Date'].dt.dayofweek
+dfSorted['DayOfMonth'] = dfSorted['Date'].dt.day
 
-
-#next day close price
-dfDaily['NextClose'] = dfDaily['Close'].shift(-1)
-#percetange increase/decrease between close price and nextClose price
-dfDaily['NextPercentChange'] = ((dfDaily['NextClose'] - dfDaily['Close']) / dfDaily['Close']) * 100
-
-#if percentage increase is greater than 0.25% then flag as 3 (bullish)
-#if percentage decrease is less than -0.25 then flag as 2 (bearish)
-#else 1 (neutral)
-#define conditions
-conditions = [ dfDaily['NextPercentChange'] >= 0.25,
-               dfDaily['NextPercentChange'] <= -0.25,
-              (dfDaily['NextPercentChange'] > -0.25) & (dfDaily['NextPercentChange'] < 0.25) ]
-#define results
-results = [3, 2, 1]
-#create feature
-dfDaily['NextDayBullishBearish'] = np.select(conditions, results)
-
-
-#prev day close price
-dfDaily['PrevClose'] = dfDaily['Close'].shift(1)
-#percetange increase/decrease between close price and PrevClose price
-dfDaily['PercentChange'] = ((dfDaily['PrevClose'] - dfDaily['Close']) / dfDaily['Close']) * 100
+#
+dfSorted['LogReturn'] = np.log(dfSorted['Close'].shift(1)/dfSorted['Close']) * 100
+dfSorted['LogReturnN-1'] = np.log(dfSorted['Close'].shift(2)/dfSorted['Close']) * 100
+dfSorted['LogReturnN-2'] = np.log(dfSorted['Close'].shift(3)/dfSorted['Close']) * 100
+#next n days close price log
+dfSorted['CloseN+3Log'] = (np.log(dfSorted['Close'].shift(-3) / dfSorted['Close'])) * 100
 
 
 #if percentage increase is greater than 0.25% then flag as 3 (bullish)
 #if percentage decrease is less than -0.25 then flag as 2 (bearish)
 #else 1 (neutral)
 #define conditions
-conditions = [ dfDaily['PercentChange'] >= 0.25,
-               dfDaily['PercentChange'] <= -0.25,
-              (dfDaily['PercentChange'] > -0.25) & (dfDaily['PercentChange'] < 0.25) ]
+conditions = [ (dfSorted['CloseN+3Log'] >= -0.5) & (dfSorted['CloseN+3Log'] <= 0.5), # 0 - neutral
+               (dfSorted['CloseN+3Log'] > 0.5) & (dfSorted['CloseN+3Log'] < 2), # 1 - minor uptrend
+                dfSorted['CloseN+3Log'] >= 2, # 2 - major uptrend
+               (dfSorted['CloseN+3Log'] < -0.5) & (dfSorted['CloseN+3Log'] > -2), # 3 - minor downtrend
+                dfSorted['CloseN+3Log'] <= -2 # 4 - major downtrend
+              ]
 #define results
-results = [3, 2, 1]
+results = [0,1,2,3,4]
 #create feature
-dfDaily['BullishBearish'] = np.select(conditions, results)
+dfSorted['BullishBearish'] = np.select(conditions, results)
 
 
 #TA indicators
-dfDaily['RSI14'] = ta.rsi(dfDaily['Close'], 14)
-dfDaily['EMA14'] = ta.ema(dfDaily['Close'], 14)
-dfDaily.ta.stoch(high='high', low='low', k=14, d=3, append=True)
+dfSorted['RSI14'] = ta.rsi(dfSorted['Close'], 14)
+dfSorted['EMA200'] = ta.ema(dfSorted['Close'], 200)
+dfSorted['EMA100'] = ta.ema(dfSorted['Close'], 100)
+dfSorted['EMA50'] = ta.ema(dfSorted['Close'], 50)
+dfSorted.ta.stoch(high='high', low='low', k=14, d=3, append=True)
 
 #drop all nan values
-dfDaily = dfDaily.dropna()
+dfSorted = dfSorted.dropna()
 
 #view all columns
-# pd.set_option("display.max.columns", None)
-# print(dfDaily)
-# print(dfDaily['BullishBearish'].value_counts())
-#
+pd.set_option("display.max.columns", None)
+print(dfSorted)
+print(dfSorted['BullishBearish'].value_counts())
 
 
 #plots
-# sns.boxplot( x=dfDaily['BullishBearish'], y=dfDaily['RSI14'] )
+#fig, ax = plt.subplots()
+#dfSorted.groupby("BullishBearish").plot(x="datetime", y="Close", marker="o", ax=ax)
+#ax.legend(['a','b','c','d'])
+#plt.show()
+
+# sns.boxplot( x=dfSorted['BullishBearish'], y=dfSorted['CloseN+3Log'] )
 # plt.show()
 
 #heatmap correlation
@@ -105,6 +87,6 @@ dfDaily = dfDaily.dropna()
 # plt.xticks(fontsize=10)
 # plt.yticks(fontsize=10)
 # plt.show()
-#
+
 
 

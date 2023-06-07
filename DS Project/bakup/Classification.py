@@ -19,7 +19,7 @@ import xgboost as xgb
 
 
 #split date into x y
-dataset = dataset_features_target(dfDaily, ['open', 'PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['NextDayBullishBearish'] )
+dataset = dataset_features_target(dfDaily, ['close', 'PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['NextDayBullishBearish'] )
 xtrain, ytrain, xtest, ytest = dataset.x_y_train_test_split(0.8)
 
 print(np.unique(ytrain))
@@ -52,7 +52,8 @@ classifiers = [KNeighborsClassifier(4),
                RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=123),
                MLPClassifier(hidden_layer_sizes=(100, 100, 100), max_iter=10000, activation='relu', random_state=123),
                LogisticRegression(multi_class='multinomial', solver='lbfgs', random_state=123),
-               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123)]
+               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123),
+               xgb.XGBClassifier(objective='multi:softmax', num_class=len(np.unique(ytrain)))]
 
 clf_names = ["Nearest Neighbors (k=4)",
              "Nearest Neighbors (k=12)",
@@ -64,7 +65,8 @@ clf_names = ["Nearest Neighbors (k=4)",
              "Random Forest (Max Depth=20)",
              "MLP (RelU)",
              "Logistic Regression",
-             "LinearSVC"]
+             "LinearSVC",
+             "XGB Classifier"]
 
 
 #get the scores for the models
@@ -76,7 +78,7 @@ print(scores)
 
 # Create bar plot for scores
 ax = plt.gca()
-scores.plot(kind='barh', x='name', y=scores.columns[1:], ax=ax, figsize=(22,20), width=0.8)
+scores.plot(kind='barh', x='name', y=scores.columns[1:], ax=ax, figsize=(22,40), width=0.8)
 for container in ax.containers:
     ax.bar_label(container)
 plt.legend()
