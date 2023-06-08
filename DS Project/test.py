@@ -17,11 +17,11 @@ import pandas_ta as ta
 
 #paramters for train test window split
 dataframe = dfSorted
-features = ['LogReturn', 'LogReturnN-1', 'LogReturnN-2', 'RSI14', 'EMA200', 'EMA100', 'EMA50', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
+features = ['LogReturn', 'RSI14', 'EMA200', 'EMA100', 'EMA50', 'STOCHk_14_3_3', 'STOCHd_14_3_3']
 target = ['BullishBearish']
 split_ratio = 0.8  # percentage for training
 n_future = 1  # Number of days we want to look into the future based on the past days.
-n_past = 200   # Number of past days we want to use to predict the future.
+n_past = 15   # Number of past days we want to use to predict the future.
 
 #train df split
 split = int(len(dataframe) * split_ratio)

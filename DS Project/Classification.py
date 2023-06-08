@@ -1,4 +1,5 @@
 from preProcessData import dfDaily
+from getData import dfSorted
 from ClassMachineLearning import dataset_features_target
 
 import numpy as np
@@ -19,7 +20,10 @@ import xgboost as xgb
 
 
 #split date into x y
-dataset = dataset_features_target(dfDaily, ['open', 'PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['NextDayBullishBearish'] )
+dataset = dataset_features_target(dfSorted, ['LogReturn', 'RSI14', 'EMA200', 'EMA100', 'EMA50',
+                                             'STOCHk_14_3_3', 'STOCHd_14_3_3', 'MACD_12_26_9',
+                                             'MACDh_12_26_9', 'MACDs_12_26_9'], ['BullishBearish'])
+#dataset = dataset_features_target(dfDaily, ['open', 'PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['NextDayBullishBearish'] )
 xtrain, ytrain, xtest, ytest = dataset.x_y_train_test_split(0.8)
 
 print(np.unique(ytrain))
@@ -52,7 +56,9 @@ classifiers = [KNeighborsClassifier(4),
                RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=123),
                MLPClassifier(hidden_layer_sizes=(100, 100, 100), max_iter=10000, activation='relu', random_state=123),
                LogisticRegression(multi_class='multinomial', solver='lbfgs', random_state=123),
-               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123)]
+               LinearSVC(multi_class='ovr', class_weight='balanced', random_state=123),
+               xgb.XGBClassifier(objective='multi:softmax', num_class=5) ]
+
 
 clf_names = ["Nearest Neighbors (k=4)",
              "Nearest Neighbors (k=12)",
@@ -64,13 +70,13 @@ clf_names = ["Nearest Neighbors (k=4)",
              "Random Forest (Max Depth=20)",
              "MLP (RelU)",
              "Logistic Regression",
-             "LinearSVC"]
+             "LinearSVC",
+             "xgb"]
 
 
 #get the scores for the models
-scores, df, predictions = dataset.classification_models(clf_names, classifiers)
+scores, predictions = dataset.classification_models(clf_names, classifiers)
 pd.set_option("display.max.columns", None)
-print(df)
 print(scores)
 
 
@@ -92,16 +98,16 @@ plt.show()
 
 
 # plot confusion matrix
-# for x in predictions:
-#     cm = confusion_matrix(dataset.inverse_y_scaler(ytest),  x[1])
-#     cm_df = pd.DataFrame(cm,
-#                          index=[3, 2, 1],
-#                          columns=['3', '2', '1'])
-#
-#     # Plotting the confusion matrix
-#     plt.figure(figsize=(5, 4))
-#     sns.heatmap(cm_df, annot=True)
-#     plt.title('Confusion Matrix - ' + x[0])
-#     plt.ylabel('Actual Values')
-#     plt.xlabel('Predicted Values')
-#     plt.show()
+for x in predictions:
+    cm = confusion_matrix(dataset.inverse_y(ytest),  x[1])
+    cm_df = pd.DataFrame(cm,
+                         index=[4, 3, 2, 1, 0],
+                         columns=['4', '3', '2', '1', '0'])
+
+    # Plotting the confusion matrix
+    plt.figure(figsize=(5, 4))
+    sns.heatmap(cm_df, annot=True)
+    plt.title('Confusion Matrix - ' + x[0])
+    plt.ylabel('Actual Values')
+    plt.xlabel('Predicted Values')
+    plt.show()

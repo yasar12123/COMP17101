@@ -32,8 +32,7 @@ dfSorted['DayOfMonth'] = dfSorted['Date'].dt.day
 
 #
 dfSorted['LogReturn'] = np.log(dfSorted['Close'].shift(1)/dfSorted['Close']) * 100
-dfSorted['LogReturnN-1'] = np.log(dfSorted['Close'].shift(2)/dfSorted['Close']) * 100
-dfSorted['LogReturnN-2'] = np.log(dfSorted['Close'].shift(3)/dfSorted['Close']) * 100
+
 #next n days close price log
 dfSorted['CloseN+3Log'] = (np.log(dfSorted['Close'].shift(-3) / dfSorted['Close'])) * 100
 
@@ -60,6 +59,9 @@ dfSorted['EMA200'] = ta.ema(dfSorted['Close'], 200)
 dfSorted['EMA100'] = ta.ema(dfSorted['Close'], 100)
 dfSorted['EMA50'] = ta.ema(dfSorted['Close'], 50)
 dfSorted.ta.stoch(high='high', low='low', k=14, d=3, append=True)
+dfSorted.ta.macd(close='close', append=True)
+dfSorted.ta.adx(close='close', append=True)
+
 
 #drop all nan values
 dfSorted = dfSorted.dropna()
@@ -80,13 +82,13 @@ print(dfSorted['BullishBearish'].value_counts())
 # plt.show()
 
 #heatmap correlation
-# corr_matrix = dfDaily.corr(method='spearman')
-# f, ax = plt.subplots(figsize=(16,8))
-# sns.heatmap(corr_matrix, annot=True, fmt='.2f', linewidth=0.4,
-#             annot_kws={"size": 10}, cmap='coolwarm', ax=ax)
-# plt.xticks(fontsize=10)
-# plt.yticks(fontsize=10)
-# plt.show()
+corr_matrix = dfSorted.corr(method='spearman')
+f, ax = plt.subplots(figsize=(16,8))
+sns.heatmap(corr_matrix, annot=True, fmt='.2f', linewidth=0.4,
+            annot_kws={"size": 10}, cmap='coolwarm', ax=ax)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.show()
 
 
 
