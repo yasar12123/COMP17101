@@ -82,13 +82,31 @@ print(dfSorted['BullishBearish'].value_counts())
 # plt.show()
 
 #heatmap correlation
-corr_matrix = dfSorted.corr(method='spearman')
-f, ax = plt.subplots(figsize=(16,8))
-sns.heatmap(corr_matrix, annot=True, fmt='.2f', linewidth=0.4,
-            annot_kws={"size": 10}, cmap='coolwarm', ax=ax)
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
-plt.show()
+# corr_matrix = dfSorted.corr(method='spearman')
+# f, ax = plt.subplots(figsize=(16,8))
+# sns.heatmap(corr_matrix, annot=True, fmt='.2f', linewidth=0.4,
+#             annot_kws={"size": 10}, cmap='coolwarm', ax=ax)
+# plt.xticks(fontsize=10)
+# plt.yticks(fontsize=10)
+# plt.show()
 
+#plot moving averages
+# plt.plot(dfSorted['Date'], dfSorted['Close'], label="close")
+# plt.plot(dfSorted['Date'], dfSorted['EMA200'], label="EMA200")
+# plt.plot(dfSorted['Date'], dfSorted['EMA100'], label="EMA100")
+# plt.plot(dfSorted['Date'], dfSorted['EMA50'], label="EMA50")
+# plt.legend()
+# plt.show()
+
+#distribution
+# dfSorted['Volume'].plot()
+# plt.show()
+
+
+#plots
+# fig, ax = plt.subplots()
+# dfSorted.groupby("BullishBearish").plot(x="datetime", y="Close", marker="o", ax=ax)
+# ax.legend(['a','b','c','d'])
+# plt.show()
 
 
