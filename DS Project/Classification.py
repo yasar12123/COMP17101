@@ -1,4 +1,4 @@
-from preProcessData import dfDaily
+#from preProcessData import dfDaily
 from getData import dfSorted
 from ClassMachineLearning import dataset_features_target
 
@@ -20,9 +20,9 @@ import xgboost as xgb
 
 
 #split date into x y
-dataset = dataset_features_target(dfSorted, ['LogReturn', 'RSI14', 'EMA200', 'EMA100', 'EMA50',
-                                             'STOCHk_14_3_3', 'STOCHd_14_3_3', 'MACD_12_26_9',
-                                             'MACDh_12_26_9', 'MACDs_12_26_9'], ['BullishBearish'])
+dataset = dataset_features_target(dfSorted, ['RSI14', 'EMA200', 'EMA100', 'EMA50',
+                                             'STOCHk_14_3_3', 'STOCHd_14_3_3',
+                                             'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9'], ['BullishBearish'])
 #dataset = dataset_features_target(dfDaily, ['open', 'PercentChange', 'Volume USD', 'Volume BTC', 'RSI14', 'EMA14', 'STOCHk_14_3_3', 'STOCHd_14_3_3'], ['NextDayBullishBearish'] )
 xtrain, ytrain, xtest, ytest = dataset.x_y_train_test_split(0.8)
 
@@ -101,8 +101,8 @@ plt.show()
 for x in predictions:
     cm = confusion_matrix(dataset.inverse_y(ytest),  x[1])
     cm_df = pd.DataFrame(cm,
-                         index=[4, 3, 2, 1, 0],
-                         columns=['4', '3', '2', '1', '0'])
+                         index=[2, 1, 0],
+                         columns=['2', '1', '0'])
 
     # Plotting the confusion matrix
     plt.figure(figsize=(5, 4))

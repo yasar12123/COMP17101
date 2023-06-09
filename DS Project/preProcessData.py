@@ -48,7 +48,7 @@ dfDaily['DayOfMonth'] = dfDaily['Date'].dt.day
 
 
 #next day close price
-dfDaily['NextClose'] = dfDaily['close'].shift(-1)
+dfDaily['NextClose'] = dfDaily['close'].shift(-2)
 #percetange increase/decrease between close price and nextClose price
 dfDaily['NextPercentChange'] = ((dfDaily['NextClose'] - dfDaily['close']) / dfDaily['close']) * 100
 
@@ -60,42 +60,31 @@ conditions = [ dfDaily['NextPercentChange'] >= 0.25,
                dfDaily['NextPercentChange'] <= -0.25,
               (dfDaily['NextPercentChange'] > -0.25) & (dfDaily['NextPercentChange'] < 0.25) ]
 #define results
-results = [3, 2, 1]
-#create feature
-dfDaily['NextDayBullishBearish'] = np.select(conditions, results)
-
-
-#prev day close price
-dfDaily['PrevClose'] = dfDaily['close'].shift(1)
-#percetange increase/decrease between close price and PrevClose price
-dfDaily['PercentChange'] = ((dfDaily['PrevClose'] - dfDaily['close']) / dfDaily['close']) * 100
-
-
-#if percentage increase is greater than 0.25% then flag as 3 (bullish)
-#if percentage decrease is less than -0.25 then flag as 2 (bearish)
-#else 1 (neutral)
-#define conditions
-conditions = [ dfDaily['PercentChange'] >= 0.25,
-               dfDaily['PercentChange'] <= -0.25,
-              (dfDaily['PercentChange'] > -0.25) & (dfDaily['PercentChange'] < 0.25) ]
-#define results
-results = [3, 2, 1]
+results = [2, 1, 0]
 #create feature
 dfDaily['BullishBearish'] = np.select(conditions, results)
 
 
+
 #TA indicators
 dfDaily['RSI14'] = ta.rsi(dfDaily['close'], 14)
-dfDaily['EMA14'] = ta.ema(dfDaily['close'], 14)
+dfDaily['EMA200'] = ta.ema(dfDaily['close'], 200)
+dfDaily['EMA100'] = ta.ema(dfDaily['close'], 100)
+dfDaily['EMA50'] = ta.ema(dfDaily['close'], 50)
+dfDaily['EMA20'] = ta.ema(dfDaily['close'], 20)
+dfDaily['EMA10'] = ta.ema(dfDaily['close'], 10)
 dfDaily.ta.stoch(high='high', low='low', k=14, d=3, append=True)
+dfDaily.ta.macd(close='close', append=True)
+dfDaily.ta.adx(close='close', append=True)
+
 
 #drop all nan values
 dfDaily = dfDaily.dropna()
 
 #view all columns
-# pd.set_option("display.max.columns", None)
-# print(dfDaily)
-# print(dfDaily['BullishBearish'].value_counts())
+pd.set_option("display.max.columns", None)
+print(dfDaily)
+print(dfDaily['BullishBearish'].value_counts())
 
 
 

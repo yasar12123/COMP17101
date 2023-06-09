@@ -42,13 +42,11 @@ dfSorted['CloseN+3Log'] = (np.log(dfSorted['Close'].shift(-3) / dfSorted['Close'
 #else 1 (neutral)
 #define conditions
 conditions = [ (dfSorted['CloseN+3Log'] >= -0.5) & (dfSorted['CloseN+3Log'] <= 0.5), # 0 - neutral
-               (dfSorted['CloseN+3Log'] > 0.5) & (dfSorted['CloseN+3Log'] < 2), # 1 - minor uptrend
-                dfSorted['CloseN+3Log'] >= 2, # 2 - major uptrend
-               (dfSorted['CloseN+3Log'] < -0.5) & (dfSorted['CloseN+3Log'] > -2), # 3 - minor downtrend
-                dfSorted['CloseN+3Log'] <= -2 # 4 - major downtrend
+               (dfSorted['CloseN+3Log'] > 0.5), # 1 - uptrend
+               (dfSorted['CloseN+3Log'] < -0.5) # 2 -  downtrend
               ]
 #define results
-results = [0,1,2,3,4]
+results = [0,1,2]
 #create feature
 dfSorted['BullishBearish'] = np.select(conditions, results)
 
@@ -73,10 +71,10 @@ print(dfSorted['BullishBearish'].value_counts())
 
 
 #plots
-#fig, ax = plt.subplots()
-#dfSorted.groupby("BullishBearish").plot(x="datetime", y="Close", marker="o", ax=ax)
-#ax.legend(['a','b','c','d'])
-#plt.show()
+# fig, ax = plt.subplots()
+# dfSorted.groupby("BullishBearish").plot(x="datetime", y="Close", marker="o", ax=ax)
+# ax.legend(['a','b','c'])
+# plt.show()
 
 # sns.boxplot( x=dfSorted['BullishBearish'], y=dfSorted['CloseN+3Log'] )
 # plt.show()
@@ -103,10 +101,11 @@ print(dfSorted['BullishBearish'].value_counts())
 # plt.show()
 
 
-#plots
+#close trend with buy, sell, hold
 # fig, ax = plt.subplots()
-# dfSorted.groupby("BullishBearish").plot(x="datetime", y="Close", marker="o", ax=ax)
-# ax.legend(['a','b','c','d'])
+# dfSorted.groupby("BullishBearish").plot(x="datetime", y="Close", marker="o", ax=ax, linestyle='none')
+# plt.plot(dfSorted['datetime'], dfSorted['Close'], label="close")
+# ax.legend(['Hold','Buy','Sell'])
 # plt.show()
-
+#
 
